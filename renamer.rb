@@ -78,6 +78,7 @@
 #
 # to Show Name-Season Number without Trailing 0-Episode Number with Trailing 0-Episode Title.extension
 require 'net/http'
+require 'date'
 
 class Renamer
 
@@ -85,7 +86,7 @@ def initialize
 
 	#check if windows or linux
 	if RUBY_PLATFORM['linux']
-		@shows = '/home/zeke/shows.txt'
+		@shows = '/home/zeke/shows.ini'
 	else
 		output = Array.new
 		IO.popen( 'cmd.exe' , "r+" ) do  | shell |
@@ -103,8 +104,15 @@ def initialize
 			end
 		end
 		if path
-			@shows = 'C:' + path + '\\shows.txt'
+			@shows = 'C:' + path + '\\shows.ini'
 		end
+	end
+
+	begin	
+		@ini = Ini.new(@shows, true)
+	rescue
+		print @shows + " does not exist, no custom renaming available\n"
+		@ini = nil
 	end
 	
 	splits = [ ' ', '.' ]
@@ -113,7 +121,6 @@ def initialize
 	@video_list.each do | video|
 		@videos[video] = false
 	end
-	@show_exists = true
 	splits.each do |char|
 		movies = @videos.dup
 		movies.each do |movie, warned|
@@ -124,43 +131,39 @@ def initialize
 				@season = nil
 				@episode = nil
 				@extension = movie.split('.')[-1]
-				
+
+				# parse the show into @show, @season, @episode, etc...
 				if !parse_showname(pieces)
-					if  !warned # only display if on the last pass
+					if  !warned # only display if on the first pass
 						print "I could not match " + movie + " to a naming pattern I can interpret\n"
-						@videos[movie] = true
+						@videos[movie] = true # set the warning flag
 					end
 				else
+					# try to rename the file
 					rename_status = rename()
+					
 					if !rename_status #page exists, but episodes not listed
 						print "Epguides does not have " + @show + " season: " + @season + " episode: " + @episode + " in it's guides.\n"
-					elsif rename_status == "404"
-						url = nil
-						if @show_exists && File.exists?(@shows)
-							IO::readlines(@shows).each do |line|
-								if line.downcase.match(@show.downcase)
-									aliases = line.split("\t")
-									aliases.each_index do |i|
-										if i != 0 && !aliases[i].empty?
-											url = aliases[i]
-											url.chomp!
-											break
-										end # if i != 0
-									end # aliases.each
-									if(aliases[-1] != url) then @show = aliases[-1] end
-								end # line.match
-							end # IO::readlines
+						
+						# we parsed the file, but we can't rename it so don't try bothering to parse it again
+						# so just remove it from the list
+						@videos.delete(@file)
+					elsif rename_status == "404" # rename failed 
+						if !@ini.nil?
+							if @ini[@show]["url"]
+								print "The entry for \"" + @show + "\" has an invalid URL\n"
+							elsif @ini[@show]
+								print "The entry for \"" + @show + "\" needs a URL\n"
+							else
+								print "Please add an alias of the epguide.com show url for \"" + @show + "\" to " + @shows + "\n"
+							end
 						else
-							@show_exists = false
 							print @shows + " does not exist, will not be able to locate this show without help\n"
-							@videos.delete(@file)
-						end # if @show exists
-						if !url
-							print "Please add an alias of the epguide.com show url for " + @show + " to the shows file\n"
-							@videos.delete(@file)
-						else
-							rename(url)
-						end # if !url						
+						end # if !@ini.nil?
+
+						# we parsed the file, but we can't rename it so don't try bothering to parse it again
+						# so just remove it from the list
+						@videos.delete(@file)
 					end # if !rename_status
 				end # if !parse_showname(pieces)
 			end # if pieces.length < 2
@@ -168,8 +171,18 @@ def initialize
 	end # splits.each do |char|
 end # def initialize
 
-def rename(url=nil)
-	if !url then url = show_to_url() end
+def rename()
+	show = @ini[@show]
+
+	# if we couldn't load the ini file or this show
+	# doesn't have a url entry, try to create the url
+	# from the file info
+	if show.nil? or show["url"].nil?
+		url = show_to_url()
+	# otherwise, we use the url that is listed in the in file
+	else
+		url = show["url"]
+	end
 	
 	page = Net::HTTP.new('www.epguides.com', nil)
 	begin
@@ -178,55 +191,134 @@ def rename(url=nil)
 		print "Error loading www.epguides.com/" + url + "/\n"
 	end
 		
-	
+	#if we couldn't find it, return the error code
+	# TODO: If we get a different code, that isn't success
+	# (200?) we should probably handle this better
 	if resp.code == "404"
 		return resp.code
+	# we found the page, so rename it!
 	else
+		# get each line
 		lines =  data.split(/(\n|\r)/)
+		# go through each until we find the show data
 		lines.each do |line|
 		
 			ep = "#{@episode}"
+
+			# pad with spaces if necessary
 			if(@episode.length < 2) then ep = " " + ep end
-	
-			match = @season + "-" + ep
-			if line.match(match)
+
+			# there are two formats on epguides, one has links to TV.com
+			# others are not listed at TV.com, so are linkless. To handle
+			# both, we need to first find the line the show info is on,
+			# then try to match based on the link or the plain data
+			if line.match(@season + "-" + ep)
 				if line.match("<li>")
 					name = line[35,line.length]
 					name.delete!("\r")
+					date = line[23..31].strip
+					code = line[12..19].strip
+					date = " " unless date != ""
+					code = " " unless code != ""
 				else
-					name = line.match(/[>][0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*()".+=-_]+/)[0]
-					name = name[1,name.length]
-				end # if line.match("<li>")
-				if @show_exists && File::exists?(@shows)
-					IO::readlines(@shows).each do |line|
-						if line.match(@show.downcase)
-							aliases = line.split("\t")
-							if @show.downcase == aliases[0]
-								@show = aliases[aliases.length-1]
+					# this is not complete, as it is missing certain characters that may be in episode names,
+					# such as fancy european characters. TODO: add those
+					match = line.match(/([0-9a-zA-Z-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*()".+=-_]+)/)
+					name = ""
+					date = " "
+					code = " "
+					# not every episode lists all the data, so we have to try and figure it out
+					case match.length
+						# if we have everything, it is rather easy
+						when 4
+							name = match[3]
+							date = match[2]
+							code = match[1]
+						# if there are only 2 items, then it's a little more difficult
+						when 3
+							name = match[2]
+							# dates have spaces in them, but AFAICT no production codes have spaces
+							# so it is a pretty good test, outside of testing the regex again
+							if match[1].include?(" ")
+								date = match[1]
+							else
+								code = match[1]
 							end
-						end
+						# it's also pretty easy if there is only one thing
+						when 2
+							name = match[1]
 					end
-					@show.chomp!	
-				else
-					@show_exists = false
-					print @shows + " does not exist, will not beable to do custom renaming\n"
+					
+				end # if line.match("<li>")
+
+				# if the ini exists, we set the showname to the custome name if it exists
+				if !show.nil?
+					@show = show["customname"] unless show["customname"].nil?
 				end
-	
+
+				# pad the episode with 0 if length is less than 0, we need to handle
+				# this better for 3+ digit episodes seasons
 				if @episode.length < 2 then @episode = "0" + @episode end
-				filename = @show + " - " + @season + " - " + @episode + " - " + name + "." + @extension
-# 				filename = @show + "-" + @season + "-" + @episode + "-" + name + "." + @extension
+
+				# if the ini file exists, and they set a custom renaming mask,
+				# or a global one exists we need to do more custom renaming
+				if !show.nil? and (show["mask"] or @ini["mask"])
+					# set the filename to the mask as a base
+
+					# first we set it to the @ini mask
+					filename = @ini["mask"]
+
+					# then if a show specific mask exists, we override the global one
+					filename = show["mask"] unless show["mask"].nil?
+
+					# substitute the patterns with the data we found
+					filename.gsub!("%show%", @show)
+					filename.gsub!("%episode%", name)
+					filename.gsub!("%season%", @season)
+					filename.gsub!("%epnumber%", @episode)
+
+					# if there is a custom date format, use that
+					# otherwise date is however epguides displays it
+					if @ini["dateformat"] or show["dateformat"]
+						format = @ini["dateformat"]
+						format = show["dateformat"] unless show["dateformat"].nil?
+						date.insert(-3, "20")
+						date = Date.parse(date).strftime(format)
+					end
+
+
+					# TODO: we need to handle this better if date, code, etc.. don't exists
+					# right now they just end up as spaces
+					filename.gsub!("%date%", date)
+					filename.gsub!("%code%", code)
+					
+				# if we don't have a shows.ini, or nothing specific is set, use the default pattern
+				else
+					filename = @show + " - " + @season + " - " + @episode + " - " + name
+				end
+
+				# add on the extension
+				filename += "." + @extension
+
+				# replace these illegal win32 characters with '-'
 				filename.gsub!(":", "-")
 				filename.gsub!("/", "-")
+
+				# just delete theses illegal win32 characters
 				filename.delete!("?\\/<>\"")
-	
-				if !File::exist?(filename)
+
+				# TODO: Regression - Add command line option to allow overwrites
+				# if the file doesn't exist, we rename it
+				if !File::exist?(filename) # or @overwrite
 					File::rename(@file, filename)
-					@videos.delete(@file)
+
+				# otherwise we don't overwrite it and just display a message
 				else
 					print "Can't rename " + @file + "!\n"
 					print filename + " already exists!\n"
-					@videos.delete(@file)
 				end # if !File::exist?(filename)
+				
+				@videos.delete(@file) # remove the file so we don't try to rename it again 
 				return true
 			end # if line.match(season + "-" + ep)
 		end # data.split("\n").each do |line|
@@ -325,6 +417,276 @@ if ARGV.size > 0
 		end
 	end			
 end
+
+
+#
+# ini.rb - read and write ini files
+#
+# Copyright (C) 2007 Jeena Paradies
+# License: GPL
+# Author: Jeena Paradies (info@jeenaparadies.net)
+#
+# == Overview
+#
+# This file provides a read-wite handling for ini files.
+# The data of a ini file is represented by a object which
+# is populated with strings.
+
+class Ini
+
+# Class with methods to read from and write into ini files.
+#
+# A ini file is a text file in a specific format,
+# it may include several fields which are sparated by
+# field headlines which are enclosured by "[]".
+# Each field may include several key-value pairs.
+#
+# Each key-value pair is represented by one line and
+# the value is sparated from the key by a "=".
+#
+# == Examples
+#
+# === Example ini file
+#
+#   # this is the first comment which will be saved in the comment attribute
+#   mail=info@example.com
+#   domain=example.com # this is a comment which will not be saved
+#   [database]
+#   db=example
+#   user=john
+#   passwd=very-secure
+#   host=localhost
+#   # this is another comment
+#   [filepaths]
+#   tmp=/tmp/example
+#   lib=/home/john/projects/example/lib
+#   htdocs=/home/john/projects/example/htdocs
+#   [ texts ]
+#   wellcome=Wellcome on my new website!
+#   Website description = This is only a example. # and another comment
+#
+# === Example object
+#
+#   A Ini#comment stores:
+#   "this is the first comment which will be saved in the comment attribute"
+#
+#   A Ini object stores:
+#
+#   {
+#    "mail" => "info@example.com",
+#    "domain" => "example.com",
+#    "database" => {
+#     "db" => "example",
+#     "user" => "john",
+#     "passwd" => "very-secure",
+#     "host" => "localhost"
+#    },
+#    "filepaths" => {
+#     "tmp" => "/tmp/example",
+#     "lib" => "/home/john/projects/example/lib",
+#     "htdocs" => "/home/john/projects/example/htdocs"
+#    }
+#    "texts" => {
+#     "wellcome" => "Wellcome on my new website!",
+#     "Website description" => "This is only a example."
+#    }
+#   }
+#
+# As you can see this module gets rid of all comments, linebreaks
+# and unnecessary spaces at the beginning and the end of each
+# field headline, key or value.
+#
+# === Using the object
+#
+# Using the object is stright forward:
+#
+#   ini = Ini.new("path/settings.ini")
+#   ini["mail"] = "info@example.com"
+#   ini["filepaths"] = { "tmp" => "/tmp/example" }
+#   ini.comment = "This is\na comment"
+#   puts ini["filepaths"]["tmp"]
+#   # => /tmp/example
+#   ini.write()
+#
+
+#
+# :inihash is a hash which holds all ini data
+# :comment is a string which holds the comments on the top of the file
+#
+	attr_accessor :inihash, :comment
+
+#
+# Creating a new Ini object
+#
+# +path+ is a path to the ini file
+# +load+ if nil restores the data if possible
+#        if true restores the data, if not possible raises an error
+#        if false does not resotre the data
+#
+def initialize(path, load=nil)
+	@path = path
+	@inihash = {}
+
+	if load or ( load.nil? and FileTest.readable_real? @path )
+		restore()
+	end
+end
+
+#
+# Retrive the ini data for the key +key+
+#
+def [](key)
+	@inihash[key]
+end
+
+#
+# Set the ini data for the key +key+
+#
+def []=(key, value)
+	raise TypeError, "String expected" unless key.is_a? String
+	raise TypeError, "String or Hash expected" unless value.is_a? String or value.is_a? Hash
+
+	@inihash[key] = value
+end
+
+#
+# Restores the data from file into the object
+#
+def restore()
+	@inihash = Ini.read_from_file(@path)
+	@comment = Ini.read_comment_from_file(@path)
+end
+
+#
+# Store data from the object in the file
+#
+def update()
+	Ini.write_to_file(@path, @inihash, @comment)
+end
+
+#
+# Reading data from file
+#
+# +path+ is a path to the ini file
+#
+# returns a hash which represents the data from the file
+#
+def Ini.read_from_file(path)
+	inihash = {}
+	headline = nil
+
+
+	IO.foreach(path) do |line|
+
+		line = line.strip.split(/#/)[0]
+
+		# if line is nil, just go to the next one
+		next if line.nil?
+
+		# read it only if the line doesn't begin with a "=" and is long enough
+		unless line.length < 2 and line[0,1] == "="
+
+			# it's a headline if the line begins with a "[" and ends with a "]"
+			if line[0,1] == "[" and line[line.length - 1, line.length] == "]"
+
+				# get rid of the [] and unnecessary spaces
+				headline = line[1, line.length - 2 ].strip
+				inihash[headline] = {}
+			else
+
+				key, value = line.split(/=/, 2)
+
+				key = key.strip unless key.nil?
+				value = value.strip unless value.nil?
+
+				unless headline.nil?
+					inihash[headline][key] = value
+				else
+					inihash[key] = value unless key.nil?
+				end
+			end
+		end
+	end
+
+	inihash
+end
+
+#
+# Reading comments from file
+#
+# +path+ is a path to the ini file
+#
+# Returns a string with comments from the beginning of the
+# ini file.
+#
+def Ini.read_comment_from_file(path)
+	comment = ""
+
+	IO.foreach(path) do |line|
+		line.strip!
+		next if line.nil?
+
+		next unless line[0,1] == "#"
+
+		comment << "#{line[1, line.length ].strip}\n"
+	end
+
+	comment
+end
+
+#
+# Writing a ini hash into a file
+#
+# +path+ is a path to the ini file
+# +inihash+ is a hash representing the ini File. Default is a empty hash.
+# +comment+ is a string with comments which appear on the
+#           top of the file. Each line will get a "#" before.
+#           Default is no comment.
+#
+def Ini.write_to_file(path, inihash={}, comment=nil)
+	raise TypeError, "String expected" unless comment.is_a? String or comment.nil?
+
+	raise TypeError, "Hash expected" unless inihash.is_a? Hash
+	File.open(path, "w") { |file|
+
+		unless comment.nil?
+			comment.each do |line|
+				file << "# #{line}"
+			end
+		end
+
+		file << Ini.to_s(inihash)
+	}
+end
+
+#
+# Turn a hash (up to 2 levels deepness) into a ini string
+#
+# +inihash+ is a hash representing the ini File. Default is a empty hash.
+#
+# Returns a string in the ini file format.
+#
+def Ini.to_s(inihash={})
+	str = ""
+
+	inihash.each do |key, value|
+		if value.is_a? Hash
+			str << "[#{key.to_s}]\n"
+
+			value.each do |under_key, under_value|
+				str << "#{under_key.to_s}=#{under_value.to_s unless under_value.nil?}\n"
+			end
+
+		else
+			str << "#{key.to_s}=#{value.to_s unless value2.nil?}\n"
+		end
+	end
+
+	str
+	end
+
+end # end class
+										
 
 Renamer.new
 
