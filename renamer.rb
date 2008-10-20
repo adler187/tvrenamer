@@ -4,79 +4,7 @@
 # Version 2.3
 # Copyright 2007 Kevin Adler
 # License: GPL v2
-# Changelog
 
-# Version 2.3.3
-# Added support for 3 digit episode numbers to support all of Colbert Report eps
-# This does not work if the name is a straight number ala Charmed 804.avi because that
-# would cause too much guesstimation on my part (is it a 2 digit season and 2 digit episode
-# or 1 digit season and 3 digit episode?)
-
-# Version 2.3.2
-# Fixed it so that it actually reads and uses the third parameter in the shows.txt, not sure what happened there
-# Fixed the url.chomp! being in the wrong place so that it sometimes tries to call on nil, causing Exception
-#  (How many times have I fixed that already and I keep losing the changes?)
-
-# Version 2.3.1
-# Fixed bug where the renamer assumes that the extension is 3 characters
-
-# Version 2.3
-# Added ability to individually retrieve episode and title from a filename
-# for instance from: incite-chappelles.show.s01.e01.proper.dvdrip.xvid
-
-# Version 2.2.5
-# Fixed bug with wrong variable name @shows_files_exists -> @show_exists
-
-# Version 2.2.4
-
-# Fixed bug with program exiting after episode not found on epguides.
-# Fixed bug with not being able to match show name, now we remove the extention before trying to match,
-#	I dont exactly know how it was even matching before.
-
-# Version 2.2.3
-
-# Fixed some errors with files named show.s#e##.avi
-
-# Version 2.2.2
-
-# Removed some debug output
-
-# Version 2.2.1
-
-#  shows.txt should work just fine now on windows and linux!
-
-# Version 2.2.1a
-# Test to see if shows.txt will be found on windows. Apparently you can not use the shell variable like I was using it,
-# if you are in the C directory, it will point to C:\Documents..\Username\ because the shell variable actually points to
-# \Documents..\Username and the C: gets prepended to it because you are browsing the C: directory. So what we do is
-# open up cmd.exe, echo the variable and then grab the output and use a full path: C:(output from cmd.exe). Since I don't
-# have windows available for testing at this time, it is not 100% guaranteed to work.
-
-# Version 2.2
-# -No more rename.txt! This functionality is now built in to shows.txt, first is the input title <tab> epguides name <tab> renamed name
-
-# Version 2.1.2
-# -Fixed rename.txt not being found on windows. Since windows is dumb and %Homepath% does not include the drive
-#  letter, we include "C:" before %HOMEPATH%
-
-# Version 2.1.1
-# -Fixed hack for "The 4400" remember, !show.downcase() == "the" is not the same as show.downcase() != "the"
-# -Also fixed problems with show.SSEE.avi or show.SEE.avi filters, remember ruby array slices are inclusive on
-#	first number, but exclusive on last number UNLESS last number is end of array => switched to ranges instead to avoid errors again
-
-# Version 2.1
-
-# New and improved! Now with Versioning!
-
-# renames files such as
-# Gilmore Girls s01e13 - Concert Interruptus.avi
-# Farscape [1x01] - Premiere.avi
-# Arrested.Development.3x07.avi
-# Mork.and.Mindy.S01E03.avi
-# Lost.S3E21.avi
-# Gilmore Girls - 503 - Written in the Stars.avi
-#
-# to Show Name-Season Number without Trailing 0-Episode Number with Trailing 0-Episode Title.extension
 require 'net/http'
 require 'date'
 
@@ -418,111 +346,20 @@ if ARGV.size > 0
 	end			
 end
 
-
-#
-# ini.rb - read and write ini files
-#
+# class Ini - read and write ini files
 # Copyright (C) 2007 Jeena Paradies
 # License: GPL
 # Author: Jeena Paradies (info@jeenaparadies.net)
-#
 # == Overview
-#
-# This file provides a read-wite handling for ini files.
-# The data of a ini file is represented by a object which
-# is populated with strings.
-
 class Ini
-
-# Class with methods to read from and write into ini files.
-#
-# A ini file is a text file in a specific format,
-# it may include several fields which are sparated by
-# field headlines which are enclosured by "[]".
-# Each field may include several key-value pairs.
-#
-# Each key-value pair is represented by one line and
-# the value is sparated from the key by a "=".
-#
-# == Examples
-#
-# === Example ini file
-#
-#   # this is the first comment which will be saved in the comment attribute
-#   mail=info@example.com
-#   domain=example.com # this is a comment which will not be saved
-#   [database]
-#   db=example
-#   user=john
-#   passwd=very-secure
-#   host=localhost
-#   # this is another comment
-#   [filepaths]
-#   tmp=/tmp/example
-#   lib=/home/john/projects/example/lib
-#   htdocs=/home/john/projects/example/htdocs
-#   [ texts ]
-#   wellcome=Wellcome on my new website!
-#   Website description = This is only a example. # and another comment
-#
-# === Example object
-#
-#   A Ini#comment stores:
-#   "this is the first comment which will be saved in the comment attribute"
-#
-#   A Ini object stores:
-#
-#   {
-#    "mail" => "info@example.com",
-#    "domain" => "example.com",
-#    "database" => {
-#     "db" => "example",
-#     "user" => "john",
-#     "passwd" => "very-secure",
-#     "host" => "localhost"
-#    },
-#    "filepaths" => {
-#     "tmp" => "/tmp/example",
-#     "lib" => "/home/john/projects/example/lib",
-#     "htdocs" => "/home/john/projects/example/htdocs"
-#    }
-#    "texts" => {
-#     "wellcome" => "Wellcome on my new website!",
-#     "Website description" => "This is only a example."
-#    }
-#   }
-#
-# As you can see this module gets rid of all comments, linebreaks
-# and unnecessary spaces at the beginning and the end of each
-# field headline, key or value.
-#
-# === Using the object
-#
-# Using the object is stright forward:
-#
-#   ini = Ini.new("path/settings.ini")
-#   ini["mail"] = "info@example.com"
-#   ini["filepaths"] = { "tmp" => "/tmp/example" }
-#   ini.comment = "This is\na comment"
-#   puts ini["filepaths"]["tmp"]
-#   # => /tmp/example
-#   ini.write()
-#
-
-#
 # :inihash is a hash which holds all ini data
 # :comment is a string which holds the comments on the top of the file
-#
 	attr_accessor :inihash, :comment
 
-#
-# Creating a new Ini object
-#
 # +path+ is a path to the ini file
 # +load+ if nil restores the data if possible
 #        if true restores the data, if not possible raises an error
 #        if false does not resotre the data
-#
 def initialize(path, load=nil)
 	@path = path
 	@inihash = {}
@@ -532,16 +369,12 @@ def initialize(path, load=nil)
 	end
 end
 
-#
 # Retrive the ini data for the key +key+
-#
 def [](key)
 	@inihash[key]
 end
 
-#
 # Set the ini data for the key +key+
-#
 def []=(key, value)
 	raise TypeError, "String expected" unless key.is_a? String
 	raise TypeError, "String or Hash expected" unless value.is_a? String or value.is_a? Hash
@@ -549,28 +382,20 @@ def []=(key, value)
 	@inihash[key] = value
 end
 
-#
 # Restores the data from file into the object
-#
 def restore()
 	@inihash = Ini.read_from_file(@path)
 	@comment = Ini.read_comment_from_file(@path)
 end
 
-#
 # Store data from the object in the file
-#
 def update()
 	Ini.write_to_file(@path, @inihash, @comment)
 end
 
-#
 # Reading data from file
-#
 # +path+ is a path to the ini file
-#
 # returns a hash which represents the data from the file
-#
 def Ini.read_from_file(path)
 	inihash = {}
 	headline = nil
@@ -611,14 +436,10 @@ def Ini.read_from_file(path)
 	inihash
 end
 
-#
 # Reading comments from file
-#
 # +path+ is a path to the ini file
-#
-# Returns a string with comments from the beginning of the
-# ini file.
-#
+# Returns a string with comments from the beginning of the ini file.
+
 def Ini.read_comment_from_file(path)
 	comment = ""
 
@@ -634,15 +455,12 @@ def Ini.read_comment_from_file(path)
 	comment
 end
 
-#
 # Writing a ini hash into a file
-#
 # +path+ is a path to the ini file
 # +inihash+ is a hash representing the ini File. Default is a empty hash.
 # +comment+ is a string with comments which appear on the
 #           top of the file. Each line will get a "#" before.
 #           Default is no comment.
-#
 def Ini.write_to_file(path, inihash={}, comment=nil)
 	raise TypeError, "String expected" unless comment.is_a? String or comment.nil?
 
@@ -659,13 +477,9 @@ def Ini.write_to_file(path, inihash={}, comment=nil)
 	}
 end
 
-#
 # Turn a hash (up to 2 levels deepness) into a ini string
-#
 # +inihash+ is a hash representing the ini File. Default is a empty hash.
-#
 # Returns a string in the ini file format.
-#
 def Ini.to_s(inihash={})
 	str = ""
 
@@ -686,9 +500,7 @@ def Ini.to_s(inihash={})
 	end
 
 end # end class
-										
 
 Renamer.new
-
 print "Press enter to continue..."
 gets()
