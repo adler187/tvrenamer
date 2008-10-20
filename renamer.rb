@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Renamer2.rb
-# Version 2.3
+# Version 3.0
 # Copyright 2007 Kevin Adler
 # License: GPL v2
 
@@ -10,29 +10,56 @@ require 'date'
 
 class Renamer
 
-def initialize
+def initialize(args)
 
-	#check if windows or linux
-	if RUBY_PLATFORM['linux']
-		@shows = '/home/zeke/shows.ini'
-	else
-		output = Array.new
-		IO.popen( 'cmd.exe' , "r+" ) do  | shell |
-			shell.puts "echo %HOMEPATH%"
-			shell.close_write()
-			shell.each do |l|
-				output << l.chomp
-			end	
+	@debug = false
+	@norename = false
+	if args.size > 0
+		args.each do |arg|
+		case arg
+			when "--debug":
+				@debug = true
+			when "--no-rename"
+				@norename = true
+			when "-n"
+				@norename = true
 		end
-		path = nil
-		output.each_index do |i|
-			if output[i].match('echo %HOMEPATH%')
-				path = output[i+1]
-				break
+	end
+	skipnext = false
+	args.length.times do |i|
+		if skipnext
+			skipnext = false
+			next
+		end
+		if(args[i] == '-i' || args[i] == '--ini')
+			@shows = args[i+1]
+			skipnext = false
+		end
+	end
+	
+	if(!@shows)
+		#check if windows or linux
+		if RUBY_PLATFORM['linux']
+			@shows = '/home/zeke/shows.ini'
+		else
+			output = Array.new
+			IO.popen( 'cmd.exe' , "r+" ) do  | shell |
+				shell.puts "echo %HOMEPATH%"
+				shell.close_write()
+				shell.each do |l|
+					output << l.chomp
+				end
 			end
-		end
-		if path
-			@shows = 'C:' + path + '\\shows.ini'
+			path = nil
+			output.each_index do |i|
+				if output[i].match('echo %HOMEPATH%')
+					path = output[i+1]
+					break
+				end
+			end
+			if path
+				@shows = 'C:' + path + '\\shows.ini'
+			end
 		end
 	end
 
@@ -42,7 +69,7 @@ def initialize
 		print @shows + " does not exist, no custom renaming available\n"
 		@ini = nil
 	end
-	
+
 	splits = [ ' ', '.' ]
 	@video_list = Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}']
 	@videos = Hash.new
@@ -69,19 +96,21 @@ def initialize
 				else
 					# try to rename the file
 					rename_status = rename()
-					
+
 					if !rename_status #page exists, but episodes not listed
 						print "Epguides does not have " + @show + " season: " + @season + " episode: " + @episode + " in it's guides.\n"
-						
+
 						# we parsed the file, but we can't rename it so don't try bothering to parse it again
 						# so just remove it from the list
 						@videos.delete(@file)
 					elsif rename_status == "404" # rename failed 
 						if !@ini.nil?
-							if @ini[@show]["url"]
-								print "The entry for \"" + @show + "\" has an invalid URL\n"
-							elsif @ini[@show]
-								print "The entry for \"" + @show + "\" needs a URL\n"
+							if @ini[@show.downcase]
+								if @ini[@show.downcase]["url"]
+									print "The entry for \"" + @show + "\" has an invalid URL\n"
+								else @ini[@show.downcase]
+									print "The entry for \"" + @show + "\" needs a URL\n"
+								end
 							else
 								print "Please add an alias of the epguide.com show url for \"" + @show + "\" to " + @shows + "\n"
 							end
@@ -100,8 +129,7 @@ def initialize
 end # def initialize
 
 def rename()
-	show = @ini[@show]
-
+	show = @ini[@show.downcase]
 	# if we couldn't load the ini file or this show
 	# doesn't have a url entry, try to create the url
 	# from the file info
@@ -151,7 +179,7 @@ def rename()
 				else
 					# this is not complete, as it is missing certain characters that may be in episode names,
 					# such as fancy european characters. TODO: add those
-					match = line.match(/([0-9a-zA-Z-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*()".+=-_]+)/)
+					match = line.match(/([0-9a-zA-Z\/-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*()".+=-_]+)/)
 					name = ""
 					date = " "
 					code = " "
@@ -194,10 +222,10 @@ def rename()
 					# set the filename to the mask as a base
 
 					# first we set it to the @ini mask
-					filename = @ini["mask"]
+					filename = @ini["mask"].dup
 
 					# then if a show specific mask exists, we override the global one
-					filename = show["mask"] unless show["mask"].nil?
+					filename = show["mask"].dup unless show["mask"].nil?
 
 					# substitute the patterns with the data we found
 					filename.gsub!("%show%", @show)
@@ -207,7 +235,7 @@ def rename()
 
 					# if there is a custom date format, use that
 					# otherwise date is however epguides displays it
-					if @ini["dateformat"] or show["dateformat"]
+					if date != ' ' and (@ini["dateformat"] or show["dateformat"])
 						format = @ini["dateformat"]
 						format = show["dateformat"] unless show["dateformat"].nil?
 						date.insert(-3, "20")
@@ -219,7 +247,6 @@ def rename()
 					# right now they just end up as spaces
 					filename.gsub!("%date%", date)
 					filename.gsub!("%code%", code)
-					
 				# if we don't have a shows.ini, or nothing specific is set, use the default pattern
 				else
 					filename = @show + " - " + @season + " - " + @episode + " - " + name
@@ -242,7 +269,7 @@ def rename()
 
 				# otherwise we don't overwrite it and just display a message
 				else
-					print "Can't rename " + @file + "!\n"
+					print "Can't rename " + @file + " to " + filename + "!\n"
 					print filename + " already exists!\n"
 				end # if !File::exist?(filename)
 				
@@ -301,7 +328,13 @@ def parse_showname(pieces)
 			if(@season[0].chr == '0') then @season.delete!("0") end
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			break
-		elsif ((p = piece.match(/^[0-9]{3,4}/)) && !(@show.downcase == "the" || @show.downcase == "sealab")) # Work around for "The 4400" and "Sealab 2021"
+		elsif ((p = piece.match(/^[0-9]{3,4}/)) and
+			  !(
+					@show.downcase == "the" || # Work around for "The 4400"
+					@show.downcase == "sealab" || # Work around for "Sealab 2021"
+					(@show.downcase == "knight rider" and p.to_s == "2008") # Work around for "Knight Rider 2008"
+			   )
+			  )
 			piece = p.to_s
 			if piece.length == 3
 				@season = piece[0].chr
@@ -331,31 +364,18 @@ end # def match(pieces)
 
 end # class Renamer
 
-debug = false
-norename = false
-if ARGV.size > 0
-	ARGV.each do |arg|
-		case arg
-			when "--debug":
-				debug = true
-			when "--no-rename"
-				norename = true
-			when "-n"
-				norename = true
-		end
-	end			
-end
-
-# class Ini - read and write ini files
+# Ini class - read and write ini files
 # Copyright (C) 2007 Jeena Paradies
 # License: GPL
 # Author: Jeena Paradies (info@jeenaparadies.net)
-# == Overview
+
 class Ini
+
 # :inihash is a hash which holds all ini data
 # :comment is a string which holds the comments on the top of the file
 	attr_accessor :inihash, :comment
 
+# Creating a new Ini object
 # +path+ is a path to the ini file
 # +load+ if nil restores the data if possible
 #        if true restores the data, if not possible raises an error
@@ -438,8 +458,8 @@ end
 
 # Reading comments from file
 # +path+ is a path to the ini file
-# Returns a string with comments from the beginning of the ini file.
-
+# Returns a string with comments from the beginning of the
+# ini file.
 def Ini.read_comment_from_file(path)
 	comment = ""
 
@@ -501,6 +521,7 @@ def Ini.to_s(inihash={})
 
 end # end class
 
-Renamer.new
-print "Press enter to continue..."
-gets()
+Renamer.new(ARGV)
+
+# print "Press enter to continue..."
+# gets()
