@@ -16,13 +16,14 @@ def initialize(args)
 	@norename = false
 	if args.size > 0
 		args.each do |arg|
-		case arg
-			when "--debug":
-				@debug = true
-			when "--no-rename"
-				@norename = true
-			when "-n"
-				@norename = true
+			case arg
+				when "--debug":
+					@debug = true
+				when "--no-rename"
+					@norename = true
+				when "-n"
+					@norename = true
+			end
 		end
 	end
 	skipnext = false
@@ -517,7 +518,7 @@ def Ini.to_s(inihash={})
 	end
 
 	str
-	end
+end
 
 end # end class
 

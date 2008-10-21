@@ -162,7 +162,7 @@ tests.each do |test, expected|
 end
 
 if count == 0
-	print "All tests passed!\n"
+	print "All " + count + " tests passed!\n"
 else
 	print count + " tests of " + tests.length + " failed\n"
 end

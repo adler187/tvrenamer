@@ -1,3 +1,12 @@
+Version 3.0.1
+Fixed bug with moving command line argument handling causing a missing 'end'
+
+Version 3.0
+Replaced shows.txt with shows.ini.
+Added support to get the production code and air date
+Added support for custom renaming masks
+Added support for custom date formats for air date
+Added support for per show custom masks and dates
 
 Version 2.3.3
 Added support for 3 digit episode numbers to support all of Colbert Report eps
