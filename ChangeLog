@@ -1,3 +1,9 @@
+Version 3.0.2
+Fixed bug if the page load encounters an error. It handles the error, but just prints out a warning and continues.
+This resulted in an error when trying to access code member of a nil object. Instead we print out the message and
+return nil. Also, returns the response code if it is not 200 (success) instead of if it is 404. Checks for not 404
+and displays the error.
+
 Version 3.0.1
 Fixed bug with moving command line argument handling causing a missing 'end'
 

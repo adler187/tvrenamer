@@ -45,7 +45,7 @@ def initialize(args)
 		else
 			output = Array.new
 			IO.popen( 'cmd.exe' , "r+" ) do  | shell |
-				shell.puts "echo %HOMEPATH%"
+				shell.puts "echo %HOMEDRIVE%%HOMEPATH%"
 				shell.close_write()
 				shell.each do |l|
 					output << l.chomp
@@ -53,13 +53,13 @@ def initialize(args)
 			end
 			path = nil
 			output.each_index do |i|
-				if output[i].match('echo %HOMEPATH%')
+				if output[i].match('echo %HOMEDRIVE%%HOMEPATH%')
 					path = output[i+1]
 					break
 				end
 			end
 			if path
-				@shows = 'C:' + path + '\\shows.ini'
+				@shows =  path + '\\shows.ini'
 			end
 		end
 	end
@@ -98,20 +98,22 @@ def initialize(args)
 					# try to rename the file
 					rename_status = rename()
 
-					if !rename_status #page exists, but episodes not listed
+					if rename_status == false #page exists, but episodes not listed
 						print "Epguides does not have " + @show + " season: " + @season + " episode: " + @episode + " in it's guides.\n"
 
 						# we parsed the file, but we can't rename it so don't try bothering to parse it again
 						# so just remove it from the list
-						@videos.delete(@file)
-					elsif rename_status == "404" # rename failed 
+						@videos.delete(@file)	
+					elsif !rename_status.nil? && !rename_status
+						print "Response: " + rename_status
+					elsif rename_status == "404" # rename failed
 						if !@ini.nil?
 							if @ini[@show.downcase]
 								if @ini[@show.downcase]["url"]
 									print "The entry for \"" + @show + "\" has an invalid URL\n"
 								else @ini[@show.downcase]
 									print "The entry for \"" + @show + "\" needs a URL\n"
-								end
+								end	
 							else
 								print "Please add an alias of the epguide.com show url for \"" + @show + "\" to " + @shows + "\n"
 							end
@@ -146,12 +148,11 @@ def rename()
 		resp, data = page.get('/' + url  + '/')
 	rescue
 		print "Error loading www.epguides.com/" + url + "/\n"
+		return nil;
 	end
-		
-	#if we couldn't find it, return the error code
-	# TODO: If we get a different code, that isn't success
-	# (200?) we should probably handle this better
-	if resp.code == "404"
+	
+	# if there was an error, return the error code
+	if resp.code != "200"
 		return resp.code
 	# we found the page, so rename it!
 	else
