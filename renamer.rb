@@ -7,6 +7,7 @@
 
 require 'net/http'
 require 'date'
+require 'cgi'
 
 class Renamer
 
@@ -14,28 +15,24 @@ def initialize(args)
 
 	@debug = false
 	@norename = false
-	if args.size > 0
-		args.each do |arg|
-			case arg
-				when "--debug":
-					@debug = true
-				when "--no-rename"
-					@norename = true
-				when "-n"
-					@norename = true
-			end
-		end
-	end
-	skipnext = false
-	args.length.times do |i|
-		if skipnext
-			skipnext = false
-			next
-		end
-		if(args[i] == '-i' || args[i] == '--ini')
-			@shows = args[i+1]
-			skipnext = false
-		end
+	i=0
+	while i < args.size
+ 		case args[i]
+ 			when "-i"
+ 				@shows = args[i+1]
+				if @shows.nil?
+					p "You must enter the path to the shows.ini file"
+					exit
+				end
+				i += 1
+			when "--debug"
+				@debug = true
+			when "--no-rename", "-n"
+				@norename = true
+			when "--overwrite", "-o"
+				@overwrite = true
+ 		end
+		i += 1
 	end
 	
 	if(!@shows)
@@ -64,33 +61,48 @@ def initialize(args)
 		end
 	end
 
-	begin	
+	begin	 
 		@ini = Ini.new(@shows, true)
 	rescue
 		print @shows + " does not exist, no custom renaming available\n"
 		@ini = nil
 	end
-
+		
 	splits = [ ' ', '.' ]
-	@video_list = Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}']
+	@video_list = Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}'].sort
+	
 	@videos = Hash.new
 	@video_list.each do | video|
 		@videos[video] = false
 	end
+	#@videos = @videos.sort{|a,b| a[0].downcase <=> b[0].downcase}
+	
 	splits.each do |char|
-		movies = @videos.dup
-		movies.each do |movie, warned|
-			pieces = movie.delete("[]").gsub(" - ", " ").gsub( /\([-\w]+\)/, '' ).match(/[.][a-zA-Z]+$/).pre_match.split(char)
+		movies = @video_list.dup
+		movies.each do |movie|
+			movie = movie.delete("[]").gsub(" - ", " ").gsub(/\([-\w]+\)/, '')
+			pieces = movie.match(/[.][a-zA-Z]+$/).pre_match.split(char)
+			
 			if pieces.length > 1 
 				@file = movie
 				@show = nil
 				@season = nil
 				@episode = nil
 				@extension = movie.split('.')[-1]
-
+				
+				if datematch = movie.match(/(\d\d\.\d\d\.\d{4})/)
+					date = datematch[1].gsub('.', '/')
+					@date = Date.parse(date).strftime("%d %b %y")
+					@date = @date[1..-1] if @date[0..0] == '0'
+					movie = movie.gsub(/(\d\d\.\d\d\.\d{4})/, '[date]')
+					pieces = movie.match(/[.][a-zA-Z]+$/).pre_match.split(char)
+				else
+					@date = nil
+				end
+				
 				# parse the show into @show, @season, @episode, etc...
 				if !parse_showname(pieces)
-					if  !warned # only display if on the first pass
+					if  !@videos[movie] # only display if on the first pass
 						print "I could not match " + movie + " to a naming pattern I can interpret\n"
 						@videos[movie] = true # set the warning flag
 					end
@@ -129,10 +141,18 @@ def initialize(args)
 			end # if pieces.length < 2
 		end # movies.each do |movie|
 	end # splits.each do |char|
+	Dir['*.renamer'].each do |filename|
+		File::delete(filename)
+	end
 end # def initialize
 
 def rename()
-	show = @ini[@show.downcase]
+	
+	if @ini.nil?
+		show = nil
+	else
+		show = @ini[@show.downcase]
+	end
 	# if we couldn't load the ini file or this show
 	# doesn't have a url entry, try to create the url
 	# from the file info
@@ -143,13 +163,29 @@ def rename()
 		url = show["url"]
 	end
 	
-	page = Net::HTTP.new('www.epguides.com', nil)
-	begin
-		resp, data = page.get('/' + url  + '/')
-	rescue
-		print "Error loading www.epguides.com/" + url + "/\n"
-		return nil;
+	if !File::exist?(url + ".renamer")
+		page = Net::HTTP.new('www.epguides.com', nil)
+		begin
+			resp, data = page.get('/' + url  + '/')
+		rescue
+			print "Error loading www.epguides.com/" + url + "/\n"
+			return nil;
+		end
+		File.open(url + ".renamer", "w") do |file|
+			file << data
+		end
+	else
+# 		page = Net::HTTP.new('www.epguides.com', nil)
+# 		begin
+# 			resp, data = page.get('/' + url  + '/')
+# 		rescue
+# 			print "Error loading www.epguides.com/" + url + "/\n"
+# 			return nil;
+# 		end
+		data = File.new(url + ".renamer").read
+		resp = Net::HTTPResponse.new('1.1', "200", 'OK')
 	end
+	
 	
 	# if there was an error, return the error code
 	if resp.code != "200"
@@ -157,20 +193,24 @@ def rename()
 	# we found the page, so rename it!
 	else
 		# get each line
-		lines =  data.split(/(\n|\r)/)
+		lines =  data.split(/\n|\r/)
 		# go through each until we find the show data
 		lines.each do |line|
-		
-			ep = "#{@episode}"
-
-			# pad with spaces if necessary
-			if(@episode.length < 2) then ep = " " + ep end
-
+			if !show.nil? && show["renamebydate"] && @date
+				matchstring = @date
+			else
+				ep = "#{@episode}"
+				
+				# pad with spaces if necessary
+				if(@episode.length < 2) then ep = " " + ep end
+				matchstring = @season + "-" + ep
+			end
+			
 			# there are two formats on epguides, one has links to TV.com
 			# others are not listed at TV.com, so are linkless. To handle
 			# both, we need to first find the line the show info is on,
 			# then try to match based on the link or the plain data
-			if line.match(@season + "-" + ep)
+			if line.match(matchstring)
 				if line.match("<li>")
 					name = line[35,line.length]
 					name.delete!("\r")
@@ -181,32 +221,37 @@ def rename()
 				else
 					# this is not complete, as it is missing certain characters that may be in episode names,
 					# such as fancy european characters. TODO: add those
-					match = line.match(/([0-9a-zA-Z\/-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*()".+=-_]+)/)
+					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z\/-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=-_]+)/)
 					name = ""
 					date = " "
 					code = " "
+					
+					if !@season
+						seasonmatch = match[1].match(/(\d\d?)- ?(\d+)/)
+						@season = seasonmatch[1]
+						@episode = seasonmatch[2]
+					end
 					# not every episode lists all the data, so we have to try and figure it out
 					case match.length
 						# if we have everything, it is rather easy
+						when 5
+							name = match[4]
+							date = match[3]
+							unless match[2].nil? then code = match[2] end
+						# if there are only 2 items, then it's a little more difficult
 						when 4
 							name = match[3]
-							date = match[2]
-							code = match[1]
-						# if there are only 2 items, then it's a little more difficult
-						when 3
-							name = match[2]
 							# dates have spaces in them, but AFAICT no production codes have spaces
 							# so it is a pretty good test, outside of testing the regex again
-							if match[1].include?(" ")
-								date = match[1]
+							if match[2].include?(" ")
+								date = match[2]
 							else
-								code = match[1]
+								code = match[2]
 							end
 						# it's also pretty easy if there is only one thing
-						when 2
-							name = match[1]
+						when 3
+							name = match[2]
 					end
-					
 				end # if line.match("<li>")
 
 				# if the ini exists, we set the showname to the custome name if it exists
@@ -257,6 +302,9 @@ def rename()
 				# add on the extension
 				filename += "." + @extension
 
+				# replace html encoded characters
+				filename = CGI.unescapeHTML(filename)
+				
 				# replace these illegal win32 characters with '-'
 				filename.gsub!(":", "-")
 				filename.gsub!("/", "-")
@@ -309,35 +357,36 @@ def show_to_url
 end # def show_to_url
 
 def parse_showname(pieces)
+	date = false
 	pieces.each do |piece|
-		if p = piece.match(/^[sS]([0-9]{1,2})[eE]([0-9]{1,3})/)
-			@season = p[1]
-			@episode = p[2]
+		if match = piece.match(/^[sS]([0-9]{1,2})[eE]([0-9]{1,3})/)
+			@season = match[1]
+			@episode = match[2]
 			if(@season[0].chr == '0') then @season.delete!("0") end
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			break
-		elsif p = piece.match(/^[sS]([0-9]{1,2})$/)
-			@season = p[1]
+		elsif match = piece.match(/^[sS]([0-9]{1,2})$/)
+			@season = match[1]
 			if(@season[0].chr == '0') then @season.delete!("0") end
 			if(@episode) then break end
-		elsif p = piece.match(/^[eE]([0-9]{1,3})$/)
-			@episode = p[1]
+		elsif match = piece.match(/^[eE]([0-9]{1,3})$/)
+			@episode = match[1]
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			if(@season) then break end
-		elsif p = piece.match(/^([0-9]{1,2})[xX]([0-9]{1,3})/)
-			@season = p[1]
-			@episode = p[2]
+		elsif match = piece.match(/^([0-9]{1,2})[xX]([0-9]{1,3})/)
+			@season = match[1]
+			@episode = match[2]
 			if(@season[0].chr == '0') then @season.delete!("0") end
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			break
-		elsif ((p = piece.match(/^[0-9]{3,4}/)) and
+		elsif ((match = piece.match(/^[0-9]{3,4}/)) and
 			  !(
 					@show.downcase == "the" || # Work around for "The 4400"
 					@show.downcase == "sealab" || # Work around for "Sealab 2021"
-					(@show.downcase == "knight rider" and p.to_s == "2008") # Work around for "Knight Rider 2008"
+					(@show.downcase == "knight rider" and match.to_s == "2008") # Work around for "Knight Rider 2008"
 			   )
 			  )
-			piece = p.to_s
+			piece = match.to_s
 			if piece.length == 3
 				@season = piece[0].chr
 				@episode = piece[1..2]
@@ -349,18 +398,23 @@ def parse_showname(pieces)
 				if(@episode[0].chr == '0') then @episode.delete!("0") end
 			end # if piece.length
 			break
+		elsif piece == "[date]"
+			date = true
 		else
-			if !@show
-				@show = piece
-			else
-				@show = @show + " " + piece
-			end # if show == ""
-		end # if p = piece.match(/[sS][0-9]{1,2}[eE][0-9]{1,2}/)
+			if !date
+				if !@show
+					@show = piece
+				else
+					@show = @show + " " + piece
+				end # if show == ""
+			end
+		end # if match = piece.match(/[sS][0-9]{1,2}[eE][0-9]{1,2}/)
 	end # pieces.each do |piece|
-	if (!@season || !@episode)
-		return false
+
+	if !@ini || !@ini[@show.downcase] || !@ini[@show.downcase]["renamebydate"] || @ini[@show.downcase]["renamebydate"] != "true"
+		return @season && @episode
 	else
-		return true
+		return !@date.nil?
 	end
 end # def match(pieces)
 

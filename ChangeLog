@@ -1,3 +1,7 @@
+Version 3.1
+Added overwrite command line option
+Added ability to rename shows by air date instead of season/episode number, use renamebydate = true in the ini file
+
 Version 3.0.2
 Fixed bug if the page load encounters an error. It handles the error, but just prints out a warning and continues.
 This resulted in an error when trying to access code member of a nil object. Instead we print out the message and
