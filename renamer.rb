@@ -67,7 +67,7 @@ def initialize(args)
 		print @shows + " does not exist, no custom renaming available\n"
 		@ini = nil
 	end
-		
+  
 	splits = [ ' ', '.' ]
 	@video_list = Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}'].sort
 	
@@ -265,14 +265,16 @@ def rename()
 
 				# if the ini file exists, and they set a custom renaming mask,
 				# or a global one exists we need to do more custom renaming
-				if !show.nil? and (show["mask"] or @ini["mask"])
+				if (!show.nil? and show["mask"]) or @ini["mask"]
 					# set the filename to the mask as a base
 
 					# first we set it to the @ini mask
 					filename = @ini["mask"].dup
 
 					# then if a show specific mask exists, we override the global one
-					filename = show["mask"].dup unless show["mask"].nil?
+					if !show.nil? and !show["mask"].nil?
+            filename = show["mask"].dup
+          end
 
 					# substitute the patterns with the data we found
 					filename.gsub!("%show%", @show)
@@ -282,9 +284,11 @@ def rename()
 
 					# if there is a custom date format, use that
 					# otherwise date is however epguides displays it
-					if date != ' ' and (@ini["dateformat"] or show["dateformat"])
+					if date != ' ' and (@ini["dateformat"] or (show.nil? and show["dateformat"]))
 						format = @ini["dateformat"]
-						format = show["dateformat"] unless show["dateformat"].nil?
+            if !show.nil? and !show["dateformat"].nil?
+              format = show["dateformat"]
+            end
 						date.insert(-3, "20")
 						date = Date.parse(date).strftime(format)
 					end
@@ -296,6 +300,7 @@ def rename()
 					filename.gsub!("%code%", code)
 				# if we don't have a shows.ini, or nothing specific is set, use the default pattern
 				else
+          print "no mask"
 					filename = @show + " - " + @season + " - " + @episode + " - " + name
 				end
 

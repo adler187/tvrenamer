@@ -1,3 +1,6 @@
+Version 3.1.2
+Fixed bug where it would not use ini settings
+
 Version 3.1.1
 On windows, since it is most likely be ran by double click, the user will not be able to see any output, so we 
 prompt them to end the program.
