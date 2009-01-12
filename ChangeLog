@@ -1,3 +1,8 @@
+Version 3.1.1
+On windows, since it is most likely be ran by double click, the user will not be able to see any output, so we 
+prompt them to end the program.
+Also changed version information in file to reflect minor version 3.1
+
 Version 3.1
 Added overwrite command line option
 Added ability to rename shows by air date instead of season/episode number, use renamebydate = true in the ini file
