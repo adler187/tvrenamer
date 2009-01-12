@@ -236,7 +236,7 @@ def rename()
 						# if we have everything, it is rather easy
 						when 5
 							name = match[4]
-							date = match[3]
+							unless match[3].nil? then date = match[3] end
 							unless match[2].nil? then code = match[2] end
 						# if there are only 2 items, then it's a little more difficult
 						when 4
@@ -273,8 +273,8 @@ def rename()
 
 					# then if a show specific mask exists, we override the global one
 					if !show.nil? and !show["mask"].nil?
-            filename = show["mask"].dup
-          end
+						filename = show["mask"].dup
+					end
 
 					# substitute the patterns with the data we found
 					filename.gsub!("%show%", @show)
@@ -284,13 +284,18 @@ def rename()
 
 					# if there is a custom date format, use that
 					# otherwise date is however epguides displays it
-					if date != ' ' and (@ini["dateformat"] or (show.nil? and show["dateformat"]))
-						format = @ini["dateformat"]
-            if !show.nil? and !show["dateformat"].nil?
-              format = show["dateformat"]
-            end
-						date.insert(-3, "20")
-						date = Date.parse(date).strftime(format)
+					
+					if date != ' ' && @ini
+						format = nil
+						if !show.nil? and show["dateformat"]
+							format = show["dateformat"]
+						elsif @ini["dateformat"]
+							format = @ini["dateformat"]
+						end
+						if format
+							date.insert(-3, "20")
+							date = Date.parse(date).strftime(format)
+						end
 					end
 
 
@@ -582,9 +587,13 @@ end
 
 end # end class
 
-Renamer.new(ARGV)
+begin
+	Renamer.new(ARGV)
+rescue Exception
+	puts $!, $@
+end
 
 if !RUBY_PLATFORM['linux']
-	print "Press enter to continue..."
-	gets()
+	puts "Press enter to continue..."
+	gets
 end
