@@ -579,5 +579,7 @@ end # end class
 
 Renamer.new(ARGV)
 
-# print "Press enter to continue..."
-# gets()
+if !RUBY_PLATFORM['linux']
+	print "Press enter to continue..."
+	gets()
+end
