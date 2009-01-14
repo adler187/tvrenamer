@@ -80,11 +80,11 @@ def initialize(args)
 	splits.each do |char|
 		movies = @video_list.dup
 		movies.each do |movie|
+			@file = movie
 			movie = movie.delete("[]").gsub(" - ", " ").gsub(/\([-\w]+\)/, '')
 			pieces = movie.match(/[.][a-zA-Z]+$/).pre_match.split(char)
 			
 			if pieces.length > 1 
-				@file = movie
 				@show = nil
 				@season = nil
 				@episode = nil
