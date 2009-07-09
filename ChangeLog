@@ -1,3 +1,6 @@
+Version 3.2.0
+Added support for TVRage pages. May be incomplete
+
 Version 3.1.4
 Fixed bug where files containing dashes would not get renamed properly.
 Since I use the file list now instead of the hash table for looping to 

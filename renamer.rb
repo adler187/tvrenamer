@@ -147,7 +147,6 @@ def initialize(args)
 end # def initialize
 
 def rename()
-	
 	if @ini.nil?
 		show = nil
 	else
@@ -191,21 +190,21 @@ def rename()
 	if resp.code != "200"
 		return resp.code
 	# we found the page, so rename it!
-	else
+	else		
+		if !show.nil? && show["renamebydate"] && @date
+			matchstring = @date
+		else
+			ep = "#{@episode}"
+				
+			# pad with spaces if necessary
+			if(@episode.length < 2) then ep = " " + ep end
+				matchstring = @season + "-" + ep
+		end
+						
 		# get each line
 		lines =  data.split(/\n|\r/)
 		# go through each until we find the show data
 		lines.each do |line|
-			if !show.nil? && show["renamebydate"] && @date
-				matchstring = @date
-			else
-				ep = "#{@episode}"
-				
-				# pad with spaces if necessary
-				if(@episode.length < 2) then ep = " " + ep end
-				matchstring = @season + "-" + ep
-			end
-			
 			# there are two formats on epguides, one has links to TV.com
 			# others are not listed at TV.com, so are linkless. To handle
 			# both, we need to first find the line the show info is on,
@@ -221,7 +220,7 @@ def rename()
 				else
 					# this is not complete, as it is missing certain characters that may be in episode names,
 					# such as fancy european characters. TODO: add those
-					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z\/-]+)?\s+(\d{1,2} \w{3} \d{2})?\s+<a.+">([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=-_]+)/)
+					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z\/-]+)?\s+(\d{1,2}(?: |\/)\w{3}(?: |\/)\d{2})?\s+<a.+(?:"|')>([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=-_]+)/)
 					name = ""
 					date = " "
 					code = " "
@@ -335,7 +334,12 @@ def rename()
 				
 				@videos.delete(@file) # remove the file so we don't try to rename it again 
 				return true
-			end # if line.match(season + "-" + ep)
+			elsif line.match("this TVRage editor") && !show.nil? && show["renamebydate"] && @date
+				matchstring = matchstring.gsub(' ', '/')
+				if(matchstring.length < 9)
+					matchstring = '0' + matchstring
+				end
+			end # if line.match(matchstring)
 		end # data.split("\n").each do |line|
 	end # resp.code == 404
 	return false

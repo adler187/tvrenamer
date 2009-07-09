@@ -27,14 +27,15 @@ files.each do |file|
 			else
 				ep = ep[0] + "x" + ep[1] + '.' + episode[episode.length-3..episode.length]
 				filename = show + " " + ep
+				File::rename(episode, filename)
 				begin
-					File::rename(episode, filename)
 					if RUBY_PLATFORM['linux']
-						system("mv '" + filename + "' ..")
+						system("mv \"" + filename +  "\" ..")
 					else
-						system('move "' + filename + '" ..')
+						system("move \"" + filename + "\" ..")
 					end
 				rescue
+					puts $!, $@
 					print file + " is in use, skipping."
 				end
 			end

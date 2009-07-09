@@ -16,13 +16,13 @@ dirs = Dir["*"]
 dirs.each do |dir|
 	if(File::directory?(dir))
 		Dir::chdir(dir)
-		if(File::exists?(dir + ".mkv") && !overwrite)
+		if(File::exists?("temp.mkv") && !overwrite)
 			Dir::chdir("..")
 			next
 		end
-		movie = Dir["*.avi"][0]
+		movie = Dir["*.{avi,mkv}"][0]
 		subs = Dir["*.idx"][0]
-		command = data.gsub("(FILENAME)", dir + ".mkv")
+		command = data.gsub("(FILENAME)", "temp.mkv")
 		if(movie != nil && subs != nil)
 			command.gsub!("(AVI)", movie)
 			command.gsub!("(SUBS)", subs)
