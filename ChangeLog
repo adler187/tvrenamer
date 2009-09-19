@@ -1,3 +1,8 @@
+Version 3.2.1
+Added more support for TVRage pages. It seems more and more epguides pages are using TVRage instead of TV.com
+- added support for Episodes numbers lower than 10 on TVRage pages as TV.com pages use <season>- <episode number>
+  and TVRage uses <season>-0<episode number> for episodes lower than 10.
+
 Version 3.2.0
 Added support for TVRage pages. May be incomplete
 

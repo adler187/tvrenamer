@@ -334,11 +334,15 @@ def rename()
 				
 				@videos.delete(@file) # remove the file so we don't try to rename it again 
 				return true
-			elsif line.match("this TVRage editor") && !show.nil? && show["renamebydate"] && @date
-				matchstring = matchstring.gsub(' ', '/')
-				if(matchstring.length < 9)
-					matchstring = '0' + matchstring
-				end
+			elsif line.match("this TVRage editor")
+				if !show.nil? && show["renamebydate"] && @date
+					matchstring = matchstring.gsub(' ', '/')
+					if(matchstring.length < 9)
+						matchstring = '0' + matchstring
+					end
+				else
+					matchstring.gsub!(' ', '0')
+				end # if !show.nil? && show["renamebydate"] && @date
 			end # if line.match(matchstring)
 		end # data.split("\n").each do |line|
 	end # resp.code == 404
