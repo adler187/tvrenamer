@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Renamer2.rb
-# Version 3.1
+# Version 3.2.1
 # Copyright 2007 Kevin Adler
 # License: GPL v2
 
