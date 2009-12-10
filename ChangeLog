@@ -1,3 +1,8 @@
+Version 3.2.2
+Added support for '#' in a production number (Parks and Recreation).
+
+Also fixed an issue with assuming the ini file exists, which causes null pointer exception
+
 Version 3.2.1
 Added more support for TVRage pages. It seems more and more epguides pages are using TVRage instead of TV.com
 - added support for Episodes numbers lower than 10 on TVRage pages as TV.com pages use <season>- <episode number>

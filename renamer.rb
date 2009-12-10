@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Renamer2.rb
-# Version 3.2.1
+# Version 3.2.2
 # Copyright 2007 Kevin Adler
 # License: GPL v2
 
@@ -220,7 +220,7 @@ def rename()
 				else
 					# this is not complete, as it is missing certain characters that may be in episode names,
 					# such as fancy european characters. TODO: add those
-					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z\/-]+)?\s+(\d{1,2}(?: |\/)\w{3}(?: |\/)\d{2})?\s+<a.+(?:"|')>([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=-_]+)/)
+					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z#\/-]+)?\s+(\d{1,2}(?: |\/)\w{3}(?: |\/)\d{2})?\s+<a.+(?:"|')>([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=-_]+)/)
 					name = ""
 					date = " "
 					code = " "
@@ -264,7 +264,7 @@ def rename()
 
 				# if the ini file exists, and they set a custom renaming mask,
 				# or a global one exists we need to do more custom renaming
-				if (!show.nil? and show["mask"]) or @ini["mask"]
+				if (!show.nil? and show["mask"]) or (!@ini.nil? and @ini["mask"])
 					# set the filename to the mask as a base
 
 					# first we set it to the @ini mask
