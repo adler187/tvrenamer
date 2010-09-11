@@ -174,13 +174,6 @@ def rename()
 			file << data
 		end
 	else
-# 		page = Net::HTTP.new('www.epguides.com', nil)
-# 		begin
-# 			resp, data = page.get('/' + url  + '/')
-# 		rescue
-# 			print "Error loading www.epguides.com/" + url + "/\n"
-# 			return nil;
-# 		end
 		data = ''
 		File.open(url + ".renamer", "r") do |file|
 			data = file.read
@@ -188,7 +181,6 @@ def rename()
 
 		resp = Net::HTTPResponse.new('1.1', "200", 'OK')
 	end
-	
 	
 	# if there was an error, return the error code
 	if resp.code != "200"
