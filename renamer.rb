@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Renamer2.rb
-# Version 3.2.3
+# Version 3.2.4
 # Copyright 2007 Kevin Adler
 # License: GPL v2
 
@@ -181,7 +181,11 @@ def rename()
 # 			print "Error loading www.epguides.com/" + url + "/\n"
 # 			return nil;
 # 		end
-		data = File.new(url + ".renamer").read
+		data = ''
+		File.open(url + ".renamer", "r") do |file|
+			data = file.read
+		end
+
 		resp = Net::HTTPResponse.new('1.1', "200", 'OK')
 	end
 	
