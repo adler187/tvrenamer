@@ -174,6 +174,13 @@ def rename()
 			file << data
 		end
 	else
+# 		page = Net::HTTP.new('www.epguides.com', nil)
+# 		begin
+# 			resp, data = page.get('/' + url  + '/')
+# 		rescue
+# 			print "Error loading www.epguides.com/" + url + "/\n"
+# 			return nil;
+# 		end
 		data = ''
 		File.open(url + ".renamer", "r") do |file|
 			data = file.read
@@ -181,6 +188,7 @@ def rename()
 
 		resp = Net::HTTPResponse.new('1.1', "200", 'OK')
 	end
+	
 	
 	# if there was an error, return the error code
 	if resp.code != "200"
@@ -373,7 +381,7 @@ end # def show_to_url
 def parse_showname(pieces)
 	date = false
 	pieces.each do |piece|
-		if match = piece.match(/^[sS]([0-9]{1,2})[eE]([0-9]{1,3})/)
+		if match = piece.match(/^[sS]([0-9]{1,2})[eE]([0-9]{1,3})$/)
 			@season = match[1]
 			@episode = match[2]
 			if(@season[0].chr == '0') then @season.delete!("0") end
@@ -387,17 +395,18 @@ def parse_showname(pieces)
 			@episode = match[1]
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			if(@season) then break end
-		elsif match = piece.match(/^([0-9]{1,2})[xX]([0-9]{1,3})/)
+		elsif match = piece.match(/^([0-9]{1,2})[xX]([0-9]{1,3})$/)
 			@season = match[1]
 			@episode = match[2]
 			if(@season[0].chr == '0') then @season.delete!("0") end
 			if(@episode[0].chr == '0') then @episode.delete!("0") end
 			break
-		elsif ((match = piece.match(/^[0-9]{3,4}/)) and
+		elsif ((match = piece.match(/^[0-9]{3,4}$/)) and
 			  !(
 					@show.downcase == "the" || # Work around for "The 4400"
 					@show.downcase == "sealab" || # Work around for "Sealab 2021"
-					(@show.downcase == "knight rider" and match.to_s == "2008") # Work around for "Knight Rider 2008"
+					(@show.downcase == "knight rider" and match.to_s == "2008") || # Work around for "Knight Rider 2008"
+					(@show.downcase == "90210" and match.to_s == "90210") # Work around for 90210
 			   )
 			  )
 			piece = match.to_s
