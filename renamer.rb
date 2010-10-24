@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Renamer2.rb
-# Version 3.2.4
+# Version 3.2.6
 # Copyright 2007 Kevin Adler
 # License: GPL v2
 
@@ -224,7 +224,7 @@ def rename()
 				else
 					# this is not complete, as it is missing certain characters that may be in episode names,
 					# such as fancy european characters. TODO: add those
-					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z#\/-]+)?\s+(\d{1,2}(?: |\/)\w{3}(?: |\/)\d{2})?\s+<a\s+href=(?:"|')\S+(?:"|')>([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=_-]+)/)
+					match = line.match(/(\d\d?-\s*\d+)\s+([0-9a-zA-Z#\/-]+)?\s+(\d{1,2}(?: |\/)\w{3}(?: |\/)\d{2})?\s+<a\s+(?:\w+=(?:"|')\w+(?:"|')\s+)?href=(?:"|')\S+(?:"|')>([0-9a-zA-Z\-!: ',?`~#¡\/\$%^&*();".+=_-]+)/)
 					name = ""
 					date = " "
 					code = " "
