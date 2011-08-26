@@ -9,7 +9,7 @@ File.open("test.ini", "w") do |file|
 
 	file << "# This is a comment\n"
 	file << "mask = %show% - %season% - %epnumber% - %episode%\n"
-	
+
 	file << "[charmedaholic]\n"
 	file << "url = Charmed\n"
 	file << "customname = Charmed\n"
@@ -34,16 +34,16 @@ tests = Hash.new
 tests["colbert.report.2x1.avi"] = "Colbert Report - 2 - 01 - Nancy Grace.avi"
 tests["colbert.report.2x10.avi"] = "Colbert Report - 2 - 10 - Robin Givhan.avi"
 tests["colbert.report.2x100.avi"] = "Colbert Report - 2 - 100 - Bill Rhoden.avi"
-tests["colbert.report.04x1.avi"] = "Colbert Report - 4 - 01 - Richard Freeman.avi"
-tests["colbert.report.04x10.avi"] = "Colbert Report - 4 - 10 - Andrew Young.avi"
+tests["colbert.report.04x1.avi"] = "Colbert Report - 4 - 01 - Andrew Sullivan, Richard Freeman.avi"
+tests["colbert.report.04x10.avi"] = "Colbert Report - 4 - 10 - Malcolm Gladwell, Andrew Young.avi"
 tests["colbert.report.04x100.avi"] = "Colbert Report - 4 - 100 - David Carr.avi"
 
-tests["colbert.report.4X2.avi"] = "Colbert Report - 4 - 02 - Gary Rosen.avi"
-tests["colbert.report.4X11.avi"] = "Colbert Report - 4 - 11 - Stephen Colbert's Sport Report.avi"
-tests["colbert.report.4X101.avi"] = "Colbert Report - 4 - 101 - Kevin Costner.avi"
-tests["colbert.report.04X3.avi"] = "Colbert Report - 4 - 03 - Matt Taibbi.avi"
-tests["colbert.report.04X12.avi"] = "Colbert Report - 4 - 12 - Charles Nesson.avi"
-tests["colbert.report.04X102.avi"] = "Colbert Report - 4 - 102 - Thomas Frank.avi"
+tests["colbert.report.4X2.avi"] = "Colbert Report - 4 - 02 - Chris Beam, Gary Rosen.avi"
+tests["colbert.report.4X11.avi"] = "Colbert Report - 4 - 11 - Marie Wood, Jeb Corliss, Andrew McLean.avi"
+tests["colbert.report.4X101.avi"] = "Colbert Report - 4 - 101 - Jason Bond, Kevin Costner.avi"
+tests["colbert.report.04X3.avi"] = "Colbert Report - 4 - 03 - Gov. Mike Huckabee, Matt Taibbi.avi"
+tests["colbert.report.04X12.avi"] = "Colbert Report - 4 - 12 - Debra Dickerson, Charles Nesson.avi"
+tests["colbert.report.04X102.avi"] = "Colbert Report - 4 - 102 - Devin Gordon, Thomas Frank.avi"
 
 # season and episode prefix
 tests["colbert.report.s02e2.avi"] = "Colbert Report - 2 - 02 - Carl Bernstein.avi"
@@ -61,28 +61,28 @@ tests["colbert.report.S2e15.avi"] = "Colbert Report - 2 - 15 - Emily Yoffe.avi"
 tests["colbert.report.S2e105.avi"] = "Colbert Report - 2 - 105 - Morgan Spurlock.avi"
 
 tests["colbert.report.s02E6.avi"] = "Colbert Report - 2 - 06 - Andrew Sullivan.avi"
-tests["colbert.report.s02E16.avi"] = "Colbert Report - 2 - 16 - Christine Todd Whitman.avi"
+tests["colbert.report.s02E16.avi"] = "Colbert Report - 2 - 16 - Gov. Christine Todd Whitman.avi"
 tests["colbert.report.s02E106.avi"] = "Colbert Report - 2 - 106 - Neil Young.avi"
 tests["colbert.report.s2E7.avi"] = "Colbert Report - 2 - 07 - Frank McCourt.avi"
-tests["colbert.report.s2E17.avi"] = "Colbert Report - 2 - 17 - Sen. Barbara Boxer.avi"
+tests["colbert.report.s2E17.avi"] = "Colbert Report - 2 - 17 - Barbara Boxer.avi"
 tests["colbert.report.s2E107.avi"] = "Colbert Report - 2 - 107 - Geoffrey Nunberg.avi"
 
 tests["colbert.report.S02E8.avi"] = "Colbert Report - 2 - 08 - Nina Totenberg.avi"
-tests["colbert.report.S02E18.avi"] = "Colbert Report - 2 - 18 - James Woolsey.avi"
+tests["colbert.report.S02E18.avi"] = "Colbert Report - 2 - 18 - R. James Woolsey.avi"
 tests["colbert.report.S02E108.avi"] = "Colbert Report - 2 - 108 - Paul Krugman.avi"
 tests["colbert.report.S2E9.avi"] = "Colbert Report - 2 - 09 - David Gregory.avi"
 tests["colbert.report.S2E19.avi"] = "Colbert Report - 2 - 19 - Alan Dershowitz.avi"
 tests["colbert.report.S2E109.avi"] = "Colbert Report - 2 - 109 - Gideon Yago.avi"
 
 # season and episode are seperate tokens
-tests["colbert.report.s03.e1.avi"] = "Colbert Report - 3 - 01 - Ethan Nadelman.avi"
+tests["colbert.report.s03.e1.avi"] = "Colbert Report - 3 - 01 - Ethan Nadelmann.avi"
 tests["colbert.report.s02.e20.avi"] = "Colbert Report - 2 - 20 - George Packer.avi"
 tests["colbert.report.s02.e110.avi"] = "Colbert Report - 2 - 110 - Janna Levin.avi"
 tests["colbert.report.s3.e2.avi"] = "Colbert Report - 3 - 02 - Jim Cramer.avi"
 tests["colbert.report.s2.e21.avi"] = "Colbert Report - 2 - 21 - Lama Surya Das.avi"
 tests["colbert.report.s2.e111.avi"] = "Colbert Report - 2 - 111 - Martin Short.avi"
 
-tests["colbert.report.S03.e3.avi"] = "Colbert Report - 3 - 03 - David Camp.avi"
+tests["colbert.report.S03.e3.avi"] = "Colbert Report - 3 - 03 - David Kamp.avi"
 tests["colbert.report.S02.e22.avi"] = "Colbert Report - 2 - 22 - Michael Eric Dyson.avi"
 tests["colbert.report.s02.e112.avi"] = "Colbert Report - 2 - 112 - Toby Keith.avi"
 tests["colbert.report.S3.e4.avi"] = "Colbert Report - 3 - 04 - Judy Woodruff.avi"
@@ -104,36 +104,37 @@ tests["colbert.report.S2.E27.avi"] = "Colbert Report - 2 - 27 - Jeffrey Sachs.av
 tests["colbert.report.S2.E117.avi"] = "Colbert Report - 2 - 117 - James Carville.avi"
 
 # all as one glob of numbers
-tests["colbert.report.0408.avi"] = "Colbert Report - 4 - 08 - David Levy.avi"
-tests["colbert.report.0499.avi"] = "Colbert Report - 4 - 99 - Lucas Conley.avi"
-tests["colbert.report.409.avi"] = "Colbert Report - 4 - 09 - Eric Weiner.avi"
+tests["colbert.report.0408.avi"] = "Colbert Report - 4 - 08 - Lou Dobbs, David Levy.avi"
+tests["colbert.report.0499.avi"] = "Colbert Report - 4 - 99 - Lucas Conley, The Apples in Stereo.avi"
+tests["colbert.report.409.avi"] = "Colbert Report - 4 - 09 - Allan Sloan, Eric Weiner.avi"
 
 
 # special cases
 tests["knight.rider.2008.0101.avi"] = "knight rider 2008 - 1 - 01 - A Knight In Shining Armor.avi"
 tests["knight.rider.2008.104.avi"] = "knight rider 2008 - 1 - 04 - A Hard Day's Knight.avi"
-tests["sealab.2021.0201.avi"] = "Sealab 2021 - 2 - 01 - In the Closet.avi"
-tests["sealab.2021.205.avi"] = "Sealab 2021 - 2 - 05 - Der Dieb.avi"
-tests["the.4400.0201.avi"] = "The 4400 - 2 - 01 - Wake Up Call (1).avi"
+tests["sealab.2021.0201.avi"] = "Sealab 2021 - 2 - 01 - Der Dieb.avi"
+tests["sealab.2021.205.avi"] = "Sealab 2021 - 2 - 05 - Legend of Baggy Pants.avi"
+tests["the.4400.0201.avi"] = "The 4400 - 2 - 01 - Wake-Up Call (1).avi"
 tests["the.4400.205.avi"] = "The 4400 - 2 - 05 - Suffer the Children.avi"
-tests["the.oblongs.1x11.avi"] = "The Oblongs - 1 - 11 - Please Be Genital.avi"
+tests["the.oblongs.1x11.avi"] = "The Oblongs - 1 - 11 - Bucketheads.avi"
 tests["mork.and.mindy.1x21.avi"] = "Mork And Mindy - 1 - 21 - Mork's Night Out.avi"
 
 # custom renaming
 tests["charmedaholic.1x1.avi"] = "Charmed - 1 - 01 - Something Wicca This Way Comes.avi"
-tests["athf.1x18.avi"] = "Aqua Teen Hunger Force - 1 - 18 - 118 - 29 Dec 02 - Cybernetic Ghost of Christmas Past from the Future.avi"
+tests["athf.1x18.avi"] = "Aqua Teen Hunger Force - 1 - 18 - 2213 - 29-Dec-02 - Cybernetic Ghost of Christmas Past from the Future.avi"
 tests["Sponge.4x18.avi"] = "Sponge - 4 - 18 - 10-06-2006.avi"
 
 tests.each do |test, expected|
 	system("touch " + test)
 end
+exit
 
-system("renamer.rb -i test.ini")
+`ruby renamer.rb -i test.ini`
 
 tests.each do |test, expected|
 	if !File::exist?(expected)
 		count += 1
-		print test + " failed to rename properly\n"
+		puts "#{test} failed to rename to #{expected}"
 	else
 		File::delete(expected)
 	end
@@ -146,7 +147,7 @@ tests.each do |test, expected|
 	system("touch \"" + newtest + "\"")
 end
 
-system("renamer.rb -i test.ini")
+`ruby renamer.rb -i test.ini`
 
 tests.each do |test, expected|
 	newtest = test.dup
@@ -156,13 +157,20 @@ tests.each do |test, expected|
 		count += 1
 		print  newtest + " failed to rename properly\n"
 	else
-		print newtest + " passed, deleting\n"
 		File::delete(expected)
 	end
 end
 
 if count == 0
-	print "All " + count + " tests passed!\n"
+	print "All #{tests.length * 2} tests passed!\n"
 else
-	print count + " tests of " + tests.length + " failed\n"
+	print "#{count} tests of #{tests.length * 2} failed\n"
+end
+
+
+File::delete("test.ini")
+
+if !RUBY_PLATFORM['linux']
+	puts "Press enter to continue..."
+	gets
 end

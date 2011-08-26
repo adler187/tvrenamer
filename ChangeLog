@@ -1,3 +1,15 @@
+Version 4.0
+Major re-write/re-organization of the code.
+
+Separated video info stored in instance variables in to separate class and that class handles parsing the filename
+
+Factored giant rename method out in to smaller methods to facilitate testing (not that I generated any unit tests yet).
+
+Use nokogiri to parse html instead of regexing it as this proved to be the major problems with my code as epguides
+updated the html format, as well as problems with special characters and quotes.
+
+Now that I'm using external dependencies (nokogiri), I should remove the Ini class and use a gem instead. Maybe for 4.1 ...
+
 Version 3.2.6
 Fixed problem with Arrested Development - enabled any number of tags before href in anchor tag
 
@@ -25,9 +37,9 @@ Added support for TVRage pages. May be incomplete
 
 Version 3.1.4
 Fixed bug where files containing dashes would not get renamed properly.
-Since I use the file list now instead of the hash table for looping to 
-keep everything in order while renaming, I now can't modify the file 
-name, like I used to. So I copied the filename over first, before I 
+Since I use the file list now instead of the hash table for looping to
+keep everything in order while renaming, I now can't modify the file
+name, like I used to. So I copied the filename over first, before I
 modify it.
 
 Version 3.1.3
@@ -37,7 +49,7 @@ Version 3.1.2
 Fixed bug where it would not use ini settings
 
 Version 3.1.1
-On windows, since it is most likely be ran by double click, the user will not be able to see any output, so we 
+On windows, since it is most likely be ran by double click, the user will not be able to see any output, so we
 prompt them to end the program.
 Also changed version information in file to reflect minor version 3.1
 
