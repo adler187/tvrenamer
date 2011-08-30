@@ -11,6 +11,7 @@ begin
 	require 'net/http'
 	require 'date'
 	require 'cgi'
+	require 'fileutils'
 	require 'nokogiri'
 rescue LoadError => e
 	required_file = e.to_s.split(' -- ')[1]
@@ -151,10 +152,8 @@ end
 class Renamer
 
 def initialize(args)
-
-	@debug = false
-	@norename = false
 	@output_dir = '.'
+	@rename = true
 	i=0
 	while i < args.size
 		case args[i]
@@ -175,9 +174,11 @@ def initialize(args)
 			when "--debug"
 				@debug = true
 			when "--no-rename", "-n"
-				@norename = true
+				@rename = false
 			when "--overwrite", "-o"
 				@overwrite = true
+			when "--verbose", "-v"
+				@verbose = true
 		end
 		i += 1
 	end
@@ -263,37 +264,41 @@ end
 def rename(video)
 	return false unless set_attributes_from_epguides(video)
 
-		# if the ini exists, we set the showname to the custome name if it exists
-		if customname = attribute('customname', video.orig_show)
-			video.show = customname
-		end
+	# if the ini exists, we set the showname to the custome name if it exists
+	if customname = attribute('customname', video.orig_show)
+		video.show = customname
+	end
 
-		# pad the episode with 0 if length is less than 0, we need to handle
-		# this better for 3+ digit episodes seasons
-		video.episode_number = sprintf("%02i", video.episode_number.to_i)
+	# pad the episode with 0 if length is less than 0, we need to handle
+	# this better for 3+ digit episodes seasons
+	video.episode_number = sprintf("%02i", video.episode_number.to_i)
 
-		return false unless new_filename = generate_filename(video)
+	return false unless new_filename = generate_filename(video)
 
-		new_filename = [@output_dir, new_filename].join(File::Separator)
+	new_filename = [@output_dir, new_filename].join(File::Separator)
 
-		if @norename
-			puts "rename #{video.filename} to #{new_filename}"
-		else
-			# if the file doesn't exist (or we allow overwrites), we rename it
-			if !File::exist?(new_filename) or @overwrite
-				begin
-					File::rename(video.filename, new_filename)
-					@one_rename_succeeded = true
-				rescue SystemCallError
-					@one_rename_failed = true
-				end
-			# otherwise we don't overwrite it and just display a message
-			else
-				puts "Can't rename #{video.filename} to #{new_filename}!"
-				puts filename + " already exists!"
+	if !@rename or @verbose
+		puts "rename #{video.filename} to #{new_filename}"
+	end
+
+	if @rename
+		# if the file doesn't exist (or we allow overwrites), we rename it
+		if !File::exist?(new_filename) or @overwrite
+			begin
+				FileUtils.mv(video.filename, new_filename)
+				@one_rename_succeeded = true
+				puts "rename succeeded"
+			rescue Exception
 				@one_rename_failed = true
+				puts "rename failed"
 			end
+		# otherwise we don't overwrite it and just display a message
+		else
+			puts "Can't rename #{video.filename} to #{new_filename}!"
+			puts filename + " already exists!"
+			@one_rename_failed = true
 		end
+	end
 end
 
 def generate_filename(video)
@@ -644,6 +649,8 @@ end # end Ini
 
 begin
 	Renamer.new(ARGV).run
+rescue SystemExit => e
+	exit e.status
 rescue Exception
 	puts $!, $@
 	exit 1

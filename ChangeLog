@@ -1,3 +1,7 @@
+Version 4.0.2
+Added verbose option, not really used much yet.
+Fixed rename across partitions.
+
 Version 4.0.1
 Added option to rename to specified directory and added return codes (0 = success, 1 = failure, 2 = some, but not all renames failed)
 
