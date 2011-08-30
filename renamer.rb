@@ -154,6 +154,7 @@ def initialize(args)
 
 	@debug = false
 	@norename = false
+	@output_dir = '.'
 	i=0
 	while i < args.size
 		case args[i]
@@ -162,6 +163,13 @@ def initialize(args)
 				if @ini_file.nil?
 					puts "You must enter the path to the shows.ini file"
 					exit
+				end
+				i += 1
+			when "--output-dir", "-d"
+				@output_dir = args[i+1]
+				if @output_dir.nil?
+					puts "You must enter a directory to renamer files to!"
+					exit 1
 				end
 				i += 1
 			when "--debug"
@@ -198,12 +206,6 @@ def run
 
 		video.rename_by_date = true if video.show && attribute('renamebydate', video.orig_show)
 
-# 		if !@ini || !@ini[@show.downcase] || !@ini[@show.downcase]["renamebydate"] || @ini[@show.downcase]["renamebydate"] != "true"
-# 			return @season && @episode_number
-# 		else
-# 			return !@date.nil?
-# 		end
-
 		# parse the show into @show, @season, @episode_number, etc...
 		if !video.parsed_ok?
 			puts "I could not match #{file} to a naming pattern I can interpret"
@@ -216,6 +218,16 @@ def run
 	# delete the cached results from epguides
 	Dir['*.renamer'].each do |filename|
 		File::delete(filename)
+	end
+
+	if @one_rename_failed
+		# if some renames succeeded, return 2
+		if @one_rename_succeeded
+			exit 2
+		# if no renames succeeded, return 1
+		else
+			exit 1
+		end
 	end
 end
 
@@ -262,16 +274,24 @@ def rename(video)
 
 		return false unless new_filename = generate_filename(video)
 
+		new_filename = [@output_dir, new_filename].join(File::Separator)
+
 		if @norename
 			puts "rename #{video.filename} to #{new_filename}"
 		else
 			# if the file doesn't exist (or we allow overwrites), we rename it
 			if !File::exist?(new_filename) or @overwrite
-				File::rename(video.filename, new_filename)
+				begin
+					File::rename(video.filename, new_filename)
+					@one_rename_succeeded = true
+				rescue SystemCallError
+					@one_rename_failed = true
+				end
 			# otherwise we don't overwrite it and just display a message
 			else
 				puts "Can't rename #{video.filename} to #{new_filename}!"
 				puts filename + " already exists!"
+				@one_rename_failed = true
 			end
 		end
 end
@@ -626,6 +646,7 @@ begin
 	Renamer.new(ARGV).run
 rescue Exception
 	puts $!, $@
+	exit 1
 end
 
 if !RUBY_PLATFORM['linux']

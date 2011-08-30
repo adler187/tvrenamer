@@ -1,3 +1,8 @@
+Version 4.0.1
+Added option to rename to specified directory and added return codes (0 = success, 1 = failure, 2 = some, but not all renames failed)
+
+Also removed some commented out code.
+
 Version 4.0
 Major re-write/re-organization of the code.
 
