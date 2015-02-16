@@ -129,7 +129,7 @@ tests.each do |test, expected|
 end
 exit
 
-`ruby renamer.rb -i test.ini`
+`tv_renamer -i test.ini`
 
 tests.each do |test, expected|
   if !File::exist?(expected)
@@ -147,7 +147,7 @@ tests.each do |test, expected|
   system("touch \"" + newtest + "\"")
 end
 
-`ruby renamer.rb -i test.ini`
+`tv_renamer -i test.ini`
 
 tests.each do |test, expected|
   newtest = test.dup
@@ -169,8 +169,3 @@ end
 
 
 File::delete("test.ini")
-
-if !RUBY_PLATFORM['linux']
-  puts "Press enter to continue..."
-  gets
-end

@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'tv_renamer'
+
+Renamer.new(ARGV).run

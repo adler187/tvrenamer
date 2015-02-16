@@ -1,23 +1,14 @@
-#!/usr/bin/env ruby
-
 # renamer.rb
 # Version 4.0.0
 # Copyright 2011 Kevin Adler
 # License: GPL v2
 
-
-begin
-  require 'rubygems'
-  require 'net/http'
-  require 'date'
-  require 'cgi'
-  require 'fileutils'
-  require 'nokogiri'
-rescue LoadError => e
-  required_file = e.to_s.split(' -- ')[1]
-  puts "Cannot find #{required_file}, try doing 'gem install #{required_file}', then retry the command"
-  exit 1
-end
+require 'rubygems'
+require 'net/http'
+require 'date'
+require 'cgi'
+require 'fileutils'
+require 'nokogiri'
 
 class VideoFile
   SPLITS = [ ' ', '.' ]
@@ -646,17 +637,3 @@ def Ini.to_s(inihash={})
 end
 
 end # end Ini
-
-begin
-  Renamer.new(ARGV).run
-rescue SystemExit => e
-  exit e.status
-rescue Exception
-  puts $!, $@
-  exit 1
-end
-
-if !RUBY_PLATFORM['linux']
-  puts "Press enter to continue..."
-  STDIN.gets
-end
