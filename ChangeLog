@@ -107,7 +107,7 @@ Version 2.2.4
 
 Fixed bug with program exiting after episode not found on epguides.
 Fixed bug with not being able to match show name, now we remove the extention before trying to match,
-#	I dont exactly know how it was even matching before.
+#  I dont exactly know how it was even matching before.
 
 Version 2.2.3
 
@@ -138,7 +138,7 @@ letter, we include "C:" before %HOMEPATH%
 Version 2.1.1
 -Fixed hack for "The 4400" remember, !show.downcase() == "the" is not the same as show.downcase() != "the"
 -Also fixed problems with show.SSEE.avi or show.SEE.avi filters, remember ruby array slices are inclusive on
-#	first number, but exclusive on last number UNLESS last number is end of array => switched to ranges instead to avoid errors again
+#  first number, but exclusive on last number UNLESS last number is end of array => switched to ranges instead to avoid errors again
 
 Version 2.1
 

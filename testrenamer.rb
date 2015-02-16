@@ -2,30 +2,30 @@
 
 count = 0
 if File::exist?("test.ini")
-	File::delete("test.ini")
+  File::delete("test.ini")
 end
 
 File.open("test.ini", "w") do |file|
 
-	file << "# This is a comment\n"
-	file << "mask = %show% - %season% - %epnumber% - %episode%\n"
+  file << "# This is a comment\n"
+  file << "mask = %show% - %season% - %epnumber% - %episode%\n"
 
-	file << "[charmedaholic]\n"
-	file << "url = Charmed\n"
-	file << "customname = Charmed\n"
+  file << "[charmedaholic]\n"
+  file << "url = Charmed\n"
+  file << "customname = Charmed\n"
 
-	file << "[athf]\n"
-	file << "customname = Aqua Teen Hunger Force\n"
-	file << "url = AquaTeenHungerForce\n"
-	file << "mask = %show% - %season% - %epnumber% - %code% - %date% - %episode%\n"
+  file << "[athf]\n"
+  file << "customname = Aqua Teen Hunger Force\n"
+  file << "url = AquaTeenHungerForce\n"
+  file << "mask = %show% - %season% - %epnumber% - %code% - %date% - %episode%\n"
 
-	file << "[sponge]\n"
-	file << "dateformat = %m-%d-%Y\n"
-	file << "url = SpongeBobSquarePants\n"
-	file << "mask = %show% - %season% - %epnumber% - %date%\n"
+  file << "[sponge]\n"
+  file << "dateformat = %m-%d-%Y\n"
+  file << "url = SpongeBobSquarePants\n"
+  file << "mask = %show% - %season% - %epnumber% - %date%\n"
 
-	file << "[knight rider 2008]\n"
-	file << "url = KnightRider_2008\n"
+  file << "[knight rider 2008]\n"
+  file << "url = KnightRider_2008\n"
 
 end
 
@@ -125,52 +125,52 @@ tests["athf.1x18.avi"] = "Aqua Teen Hunger Force - 1 - 18 - 2213 - 29-Dec-02 - C
 tests["Sponge.4x18.avi"] = "Sponge - 4 - 18 - 10-06-2006.avi"
 
 tests.each do |test, expected|
-	system("touch " + test)
+  system("touch " + test)
 end
 exit
 
 `ruby renamer.rb -i test.ini`
 
 tests.each do |test, expected|
-	if !File::exist?(expected)
-		count += 1
-		puts "#{test} failed to rename to #{expected}"
-	else
-		File::delete(expected)
-	end
+  if !File::exist?(expected)
+    count += 1
+    puts "#{test} failed to rename to #{expected}"
+  else
+    File::delete(expected)
+  end
 end
 
 tests.each do |test, expected|
-	newtest = test.dup
-	newtest.gsub!('.', ' ')
-	newtest[newtest.rindex(' ')] = '.'
-	system("touch \"" + newtest + "\"")
+  newtest = test.dup
+  newtest.gsub!('.', ' ')
+  newtest[newtest.rindex(' ')] = '.'
+  system("touch \"" + newtest + "\"")
 end
 
 `ruby renamer.rb -i test.ini`
 
 tests.each do |test, expected|
-	newtest = test.dup
-	newtest.gsub!('.', ' ')
-	newtest[newtest.rindex(' ')] = '.'
-	if !File::exist?(expected)
-		count += 1
-		print  newtest + " failed to rename properly\n"
-	else
-		File::delete(expected)
-	end
+  newtest = test.dup
+  newtest.gsub!('.', ' ')
+  newtest[newtest.rindex(' ')] = '.'
+  if !File::exist?(expected)
+    count += 1
+    print  newtest + " failed to rename properly\n"
+  else
+    File::delete(expected)
+  end
 end
 
 if count == 0
-	print "All #{tests.length * 2} tests passed!\n"
+  print "All #{tests.length * 2} tests passed!\n"
 else
-	print "#{count} tests of #{tests.length * 2} failed\n"
+  print "#{count} tests of #{tests.length * 2} failed\n"
 end
 
 
 File::delete("test.ini")
 
 if !RUBY_PLATFORM['linux']
-	puts "Press enter to continue..."
-	gets
+  puts "Press enter to continue..."
+  gets
 end
