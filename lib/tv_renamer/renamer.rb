@@ -176,11 +176,22 @@ def initialize(args)
 
   if(!@ini_file)
     #check if windows or linux
-    if !RUBY_PLATFORM['linux']
-      @ini_file =  ENV['HOMEDRIVE'] + ENV['HOMEPATH'] + '\\shows.ini'
+    if RUBY_PLATFORM['linux']
+      if ENV['XDG_CONFIG_HOME']
+        basedir = ENV['XDG_CONFIG_HOME']
+      else
+        if ENV['HOME']
+          basedir = File.join(ENV['HOME'], '.config')
+        else
+          puts '$XDG_CONFIG_HOME and $HOME unset, falling back to current directory'
+          basedir = '.'
+        end
+      end
     else
-      @ini_file = ENV['HOME'] + '/shows.ini'
+      basedir = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
     end
+    
+    @ini_file = File.join(basedir, 'shows.ini')
   end
 
   begin
