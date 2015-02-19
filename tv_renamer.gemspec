@@ -2,8 +2,8 @@
 
 Gem::Specification.new do |spec|
   spec.name        = 'tv_renamer'
-  spec.version     = '4.0.2'
-  spec.date        = '2015-02-15'
+  spec.version     = '4.0.3'
+  spec.date        = '2015-02-18'
   spec.summary     = "TV Show Renamer"
   spec.description = "A tool to rename TV shows using data from epguides.com"
   spec.authors     = ["Kevin Adler"]
