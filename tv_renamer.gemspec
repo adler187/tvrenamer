@@ -11,7 +11,10 @@ Gem::Specification.new do |spec|
   spec.homepage    = 'https://github.com/adler187/tvrenamer'
   spec.license     = 'GPL-2'
   
+  spec.required_ruby_version = '>= 2.0'
+  
   spec.add_runtime_dependency 'nokogiri', '~> 1.0'
+  
   
   spec.files       = %w(LICENSE README.md)
   spec.files      += Dir.glob("bin/**/*")
