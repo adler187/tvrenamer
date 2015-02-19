@@ -127,7 +127,6 @@ tests["Sponge.4x18.avi"] = "Sponge - 4 - 18 - 10-06-2006.avi"
 tests.each do |test, expected|
   system("touch " + test)
 end
-exit
 
 `tv_renamer -i test.ini`
 
