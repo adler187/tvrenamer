@@ -1,5 +1,5 @@
 # renamer.rb
-# Version 4.0.0
+# Version 4.0.5
 # Copyright 2011 Kevin Adler
 # License: GPL v2
 
@@ -9,8 +9,6 @@ require 'date'
 require 'cgi'
 require 'fileutils'
 require 'nokogiri'
-
-require 'ini'
 
 class VideoFile
   SPLITS = [ ' ', '.' ]
