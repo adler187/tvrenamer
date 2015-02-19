@@ -110,19 +110,19 @@ tests["colbert.report.409.avi"] = "Colbert Report - 4 - 09 - Allan Sloan, Eric W
 
 
 # special cases
-tests["knight.rider.2008.0101.avi"] = "knight rider 2008 - 1 - 01 - A Knight In Shining Armor.avi"
-tests["knight.rider.2008.104.avi"] = "knight rider 2008 - 1 - 04 - A Hard Day's Knight.avi"
+tests["knight.rider.2008.0101.avi"] = "Knight Rider 2008 - 1 - 01 - A Knight in Shining Armor.avi"
+tests["knight.rider.2008.104.avi"] = "Knight Rider 2008 - 1 - 04 - A Hard Day's Knight.avi"
 tests["sealab.2021.0201.avi"] = "Sealab 2021 - 2 - 01 - Der Dieb.avi"
 tests["sealab.2021.205.avi"] = "Sealab 2021 - 2 - 05 - Legend of Baggy Pants.avi"
 tests["the.4400.0201.avi"] = "The 4400 - 2 - 01 - Wake-Up Call (1).avi"
-tests["the.4400.205.avi"] = "The 4400 - 2 - 05 - Suffer the Children.avi"
+tests["the.4400.205.avi"] = "The 4400 - 2 - 05 - Suffer The Children.avi"
 tests["the.oblongs.1x11.avi"] = "The Oblongs - 1 - 11 - Bucketheads.avi"
 tests["mork.and.mindy.1x21.avi"] = "Mork And Mindy - 1 - 21 - Mork's Night Out.avi"
 
 # custom renaming
 tests["charmedaholic.1x1.avi"] = "Charmed - 1 - 01 - Something Wicca This Way Comes.avi"
-tests["athf.1x18.avi"] = "Aqua Teen Hunger Force - 1 - 18 - 2213 - 29-Dec-02 - Cybernetic Ghost of Christmas Past from the Future.avi"
-tests["Sponge.4x18.avi"] = "Sponge - 4 - 18 - 10-06-2006.avi"
+tests["athf.1x18.avi"] = "Aqua Teen Hunger Force - 1 - 18 - 118 - 29-Dec-02 - Cybernetic Ghost Of Christmas Past From The Future.avi"
+tests["Sponge.4x18.avi"] = "Sponge - 4 - 18 - 05-05-2006.avi"
 
 tests.each do |test, expected|
   system("touch " + test)
