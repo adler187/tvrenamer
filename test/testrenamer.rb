@@ -139,6 +139,11 @@ tests.each do |test, expected|
   end
 end
 
+Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}'].each do |file|
+  puts "Unexpected file #{file}"
+  File::delete(file)
+end
+
 tests.each do |test, expected|
   newtest = test.dup
   newtest.gsub!('.', ' ')
@@ -158,6 +163,11 @@ tests.each do |test, expected|
   else
     File::delete(expected)
   end
+end
+
+Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}'].each do |file|
+  puts "Unexpected file #{file}"
+  File::delete(file)
 end
 
 if count == 0
