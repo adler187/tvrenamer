@@ -340,39 +340,35 @@ end
 
 def epguide_data(video, url)
   if !File::exist?(url + ".renamer")
-    page = Net::HTTP.new('www.epguides.com', nil)
+    page = Net::HTTP.new('www.epguides.com')
 
-    begin
-      resp, data = page.get("/#{url}/")
-    rescue
-      puts "Error loading www.epguides.com/#{url}/"
-      return nil;
-    end
+    response = page.get("/#{url}/")
 
-    if resp.code == "200"
+    case response
+    when Net::HTTPSuccess
+      data = response.body
+      
       File.open(url + ".renamer", "w") do |file|
         file << data
       end
     else
-      if resp.code == "404"
-        if !@ini.nil?
-          if @ini[video.show.downcase]
-            if @ini[video.show.downcase]["url"]
-              puts "The entry for \"#{video.show}\" has an invalid URL"
-            else
-              puts "The entry for \"#{video.show}\" needs a URL"
-            end
-          else
-            puts "Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@ini_file}"
-          end
-        else
-          puts "#{@ini_file} does not exist, please create this file and add an alias for #{video.show}"
-        end
+      if !@ini.nil?
+        puts "#{@ini_file} does not exist, please create this file and add an alias for #{video.show}"
+        return nil
+      end
+      
+      unless @ini[video.show.downcase]
+        puts "Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@ini_file}"
+        return nil
+      end
+      
+      if @ini[video.show.downcase]["url"]
+        puts "The entry for \"#{video.show}\" has an invalid URL"
       else
-        puts "I don't know how to handle an HTTP #{resp.code}"
+        puts "The entry for \"#{video.show}\" needs a URL"
       end
 
-      return nil
+      data = nil
     end
   else
     File.open(url + ".renamer", "r") do |file|
