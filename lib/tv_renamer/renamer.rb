@@ -286,7 +286,7 @@ def rename(video)
     # otherwise we don't overwrite it and just display a message
     else
       puts "Can't rename #{video.filename} to #{new_filename}!"
-      puts filename + " already exists!"
+      puts "#{video.filename} already exists!"
       @one_rename_failed = true
     end
   end
