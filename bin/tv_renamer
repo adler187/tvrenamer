@@ -3,4 +3,4 @@
 require 'rubygems'
 require 'tv_renamer'
 
-Renamer.new(ARGV).run
+TvRenamer::Renamer.new(ARGV).run
