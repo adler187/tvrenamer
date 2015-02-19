@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.files       = %w(LICENSE README.md)
   spec.files      += Dir.glob("bin/**/*")
   spec.files      += Dir.glob("lib/**/*")
-  spec.files      += Dir.glob("test/**/*")
+  spec.files      += Dir.glob("test/**/*.rb")
   
   spec.executables = %w( tv_renamer )
 end
