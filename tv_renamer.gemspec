@@ -1,9 +1,11 @@
 # encoding: utf-8
 
+require File.expand_path('../lib/tv_renamer/version', __FILE__)
+
 Gem::Specification.new do |spec|
   spec.name        = 'tv_renamer'
-  spec.version     = '4.0.5'
-  spec.date        = '2015-02-18'
+  spec.version     = TvRenamer::VERSION
+  spec.date        = '2015-02-20'
   spec.summary     = "TV Show Renamer"
   spec.description = "A tool to rename TV shows using data from epguides.com"
   spec.authors     = ["Kevin Adler"]

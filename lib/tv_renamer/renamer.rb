@@ -53,6 +53,9 @@ module TvRenamer
             @overwrite = true
           when "--verbose", "-v"
             @verbose = true
+          when "--version", "-V"
+            puts TvRenamer::VERSION
+            exit
         end
         i += 1
       end

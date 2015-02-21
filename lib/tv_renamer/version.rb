@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with tv_renamer.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'tv_renamer/videofile'
-require 'tv_renamer/version'
-
-
-require 'tv_renamer/renamer'
+module TvRenamer
+  VERSION = '5.0'
+end
