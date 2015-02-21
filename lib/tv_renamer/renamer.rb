@@ -9,6 +9,7 @@ require 'date'
 require 'cgi'
 require 'fileutils'
 require 'nokogiri'
+require 'yaml'
 
 module TvRenamer
   class Renamer
@@ -19,9 +20,9 @@ module TvRenamer
       while i < args.size
         case args[i]
           when "-i"
-            @ini_file = args[i+1]
-            if @ini_file.nil?
-              puts "You must enter the path to the shows.ini file"
+            @config_file = args[i+1]
+            if @config_file.nil?
+              puts "You must enter the path to the config file"
               exit
             end
             i += 1
@@ -44,7 +45,7 @@ module TvRenamer
         i += 1
       end
 
-      if(!@ini_file)
+      if(!@config_file)
         #check if windows or linux
         if RUBY_PLATFORM['linux']
           if ENV['XDG_CONFIG_HOME']
@@ -61,13 +62,15 @@ module TvRenamer
           basedir = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
         end
         
-        @ini_file = File.join(basedir, 'shows.ini')
+        @config_file = File.join(basedir, 'tv_renamer.yml')
       end
 
       begin
-        @ini = Ini.new(@ini_file, true)
+        @config = YAML.load(File.read(@config_file))
+#         @config = Ini.new(@config_file, true)
       rescue
-        puts "#{@ini_file} does not exist, no custom renaming available"
+        puts "#{@config_file} does not exist, no custom renaming available"
+        @config = {}
       end
     end
 
@@ -136,7 +139,7 @@ module TvRenamer
     def rename(video)
       return false unless set_attributes_from_epguides(video)
 
-      # if the ini exists, we set the showname to the custome name if it exists
+      # if the config exists, we set the showname to the custome name if it exists
       if customname = attribute('customname', video.orig_show)
         video.show = customname
       end
@@ -174,7 +177,7 @@ module TvRenamer
     end
 
     def generate_filename(video)
-      # if the ini file exists, and they set a custom renaming mask,
+      # if the config file exists, and they set a custom renaming mask,
       # or a global one exists we need to do more custom renaming
       if mask = attribute('mask', video.orig_show)
         # set the filename to the mask as a base
@@ -198,7 +201,7 @@ module TvRenamer
         # right now they just end up as spaces
         filename.gsub!("%date%", video.date)
         filename.gsub!("%code%", video.production_code)
-      # if we don't have a shows.ini, or nothing specific is set, use the default pattern
+      # if we don't have a config file, or nothing specific is set, use the default pattern
       else
         filename = [video.show, video.season, video.episode_number,  video.episode_name].join(' - ')
       end
@@ -220,56 +223,50 @@ module TvRenamer
     end
 
     def epguide_data(video, url)
-      if !File::exist?(url + ".renamer")
-        page = Net::HTTP.new('www.epguides.com')
-
-        response = page.get("/#{url}/")
-
-        case response
-        when Net::HTTPSuccess
-          data = response.body
-          
-          File.open(url + ".renamer", "w") do |file|
-            file << data
-          end
-        else
-          if !@ini.nil?
-            puts "#{@ini_file} does not exist, please create this file and add an alias for #{video.show}"
-            return nil
-          end
-          
-          unless @ini[video.show.downcase]
-            puts "Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@ini_file}"
-            return nil
-          end
-          
-          if @ini[video.show.downcase]["url"]
-            puts "The entry for \"#{video.show}\" has an invalid URL"
-          else
-            puts "The entry for \"#{video.show}\" needs a URL"
-          end
-
-          data = nil
-        end
-      else
-        File.open(url + ".renamer", "r") do |file|
-          data = file.read
-        end
+      cache_file = "#{url}.renamer"
+      
+      if File::exist?(cache_file)
+        return File.open(url + ".renamer", "r").read
       end
+        
+      page = Net::HTTP.new('www.epguides.com')
 
-      return data
+      response = page.get("/#{url}/")
+
+      if response.is_a? Net::HTTPSuccess
+        File.open(url + ".renamer", "w") do |file|
+          file << response.body
+        end
+        
+        return response.body
+      end
+      
+      if attribute('url', video.show)
+        puts "The alias of \"#{attribute('url', video.show)}\" for \"#{video.show}\" is invalid!"
+        return nil
+      end
+      
+      puts <<-EOS
+Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@config_file}
+NOTE: The url should only be the part after http://epguides.com/
+eg. if this file is actually Battlestar Galactica (1978), the full url would be http://epguides.com/BattlestarGalactica_1978/
+    you would add the following:
+  
+shows:
+  "#{video.show.downcase}":
+    url: BattlestarGalactica_1978
+      EOS
+            
+      return nil
     end
 
     def attribute(attribute, show)
-      if show
-        attr = @ini[show.downcase][attribute] unless @ini.nil? or @ini[show.downcase].nil?
-        if attr
-          return attr
-        else
-          return attribute(attribute, nil)
-        end
+      if show.nil?
+        return @config[attribute]
       else
-        return @ini[attribute] unless @ini.nil?
+        return nil if @config['shows'].nil?
+        return nil if @config['shows'][show.downcase].nil?
+        return @config['shows'][show.downcase][attribute] || @config[attribute]
       end
     end
 
@@ -344,7 +341,7 @@ module TvRenamer
     end
 
     def show_url(video)
-      # use the url specified in the ini, if set
+      # use the url specified in the config, if set
       url = attribute('url', video.show)
 
       if url.nil?

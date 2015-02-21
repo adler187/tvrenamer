@@ -1,3 +1,10 @@
+Version 5.0
+Modularize code
+
+Code is now in its own namespace: TvRenamer
+
+Remove Ini class, using YAML instead. Default config file is now tv_renamer.yml instead of shows.ini
+
 Version 4.0.5
 Fix Ini class include
 

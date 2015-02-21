@@ -1,32 +1,35 @@
 #!/usr/bin/env ruby
 
+test_config = 'test.yml'
+
 count = 0
-if File::exist?("test.ini")
-  File::delete("test.ini")
+if File::exist?(test_config)
+  File::delete(test_config)
 end
 
-File.open("test.ini", "w") do |file|
+File.open(test_config, "w") do |file|
+  file << <<ENDDOC
+# This is a comment
+mask: "%show% - %season% - %epnumber% - %episode%"
 
-  file << "# This is a comment\n"
-  file << "mask = %show% - %season% - %epnumber% - %episode%\n"
+shows:
+  charmedaholic:
+    url: Charmed
+    customname: Charmed
 
-  file << "[charmedaholic]\n"
-  file << "url = Charmed\n"
-  file << "customname = Charmed\n"
+  athf:
+    customname: Aqua Teen Hunger Force
+    url: AquaTeenHungerForce
+    mask: "%show% - %season% - %epnumber% - %code% - %date% - %episode%"
 
-  file << "[athf]\n"
-  file << "customname = Aqua Teen Hunger Force\n"
-  file << "url = AquaTeenHungerForce\n"
-  file << "mask = %show% - %season% - %epnumber% - %code% - %date% - %episode%\n"
+  sponge:
+    dateformat: "%m-%d-%Y"
+    url: SpongeBobSquarePants
+    mask: "%show% - %season% - %epnumber% - %date%"
 
-  file << "[sponge]\n"
-  file << "dateformat = %m-%d-%Y\n"
-  file << "url = SpongeBobSquarePants\n"
-  file << "mask = %show% - %season% - %epnumber% - %date%\n"
-
-  file << "[knight rider 2008]\n"
-  file << "url = KnightRider_2008\n"
-
+  "knight rider 2008":
+    url: KnightRider_2008
+ENDDOC
 end
 
 tests = Hash.new
@@ -128,7 +131,7 @@ tests.each do |test, expected|
   system("touch " + test)
 end
 
-`tv_renamer -i test.ini`
+`tv_renamer -i #{test_config}`
 
 tests.each do |test, expected|
   if !File::exist?(expected)
@@ -151,7 +154,7 @@ tests.each do |test, expected|
   system("touch \"" + newtest + "\"")
 end
 
-`tv_renamer -i test.ini`
+`tv_renamer -i #{test_config}`
 
 tests.each do |test, expected|
   newtest = test.dup
@@ -177,4 +180,4 @@ else
 end
 
 
-File::delete("test.ini")
+File::delete(test_config)
