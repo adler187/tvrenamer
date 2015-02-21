@@ -27,8 +27,15 @@ module TvRenamer
         BASEDIR = '.'
       end
     end
-  else
+  elsif RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/
     BASEDIR = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
+  else
+    if ENV['HOME']
+      BASEDIR = ENV['HOME']
+    else
+      STDERR.puts '$HOME unset, falling back to current directory'
+      BASEDIR = '.'
+    end 
   end
   
   DEFAULT_CONFIG = File.join(BASEDIR, 'tv_renamer.yml')
