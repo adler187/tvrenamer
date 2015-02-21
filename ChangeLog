@@ -1,3 +1,16 @@
+Version 4.0.5
+Fix Ini class include
+
+Version 4.0.4
+Use external Ini class in ini.rb instead of copied class in main script. Now that this is a gem, it's easier to separate the code
+in to multiple files
+
+We currently require Ruby 2.0 or higher, though I'm sure it could be made to work with 1.9.3.
+
+Version 4.0.3
+Reorganize configuration code and adhere to the XDG Base Directory spec, making use of XDG_CONFIG_HOME if available and fall back to
+~/.config if not. See http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html for more info.
+
 Version 4.0.2
 Added verbose option, not really used much yet.
 Fixed rename across partitions.
