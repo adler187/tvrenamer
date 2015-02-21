@@ -79,7 +79,6 @@ module TvRenamer
 
       begin
         @config = YAML.load(File.read(@config_file))
-#         @config = Ini.new(@config_file, true)
       rescue
         puts "#{@config_file} does not exist, no custom renaming available"
         @config = {}
