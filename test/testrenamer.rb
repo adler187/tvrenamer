@@ -148,7 +148,7 @@ tests.each do |test, expected|
   system("touch " + test)
 end
 
-`tv_renamer -i #{test_config}`
+`tv_renamer -c #{test_config}`
 
 tests.each do |test, expected|
   if !File::exist?(expected)
@@ -171,7 +171,7 @@ tests.each do |test, expected|
   system("touch \"" + newtest + "\"")
 end
 
-`tv_renamer -i #{test_config}`
+`tv_renamer -c #{test_config}`
 
 tests.each do |test, expected|
   newtest = test.dup

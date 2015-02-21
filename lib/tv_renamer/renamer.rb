@@ -25,65 +25,13 @@ require 'yaml'
 
 module TvRenamer
   class Renamer
-    def initialize(args)
-      @output_dir = '.'
-      @rename = true
-      i=0
-      while i < args.size
-        case args[i]
-          when "-i"
-            @config_file = args[i+1]
-            if @config_file.nil?
-              puts "You must enter the path to the config file"
-              exit
-            end
-            i += 1
-          when "--output-dir", "-d"
-            @output_dir = args[i+1]
-            if @output_dir.nil?
-              puts "You must enter a directory to renamer files to!"
-              exit 1
-            end
-            i += 1
-          when "--debug"
-            @debug = true
-          when "--no-rename", "-n"
-            @rename = false
-          when "--overwrite", "-o"
-            @overwrite = true
-          when "--verbose", "-v"
-            @verbose = true
-          when "--version", "-V"
-            puts TvRenamer::VERSION
-            exit
-        end
-        i += 1
-      end
-
-      if(!@config_file)
-        #check if windows or linux
-        if RUBY_PLATFORM['linux']
-          if ENV['XDG_CONFIG_HOME']
-            basedir = ENV['XDG_CONFIG_HOME']
-          else
-            if ENV['HOME']
-              basedir = File.join(ENV['HOME'], '.config')
-            else
-              puts '$XDG_CONFIG_HOME and $HOME unset, falling back to current directory'
-              basedir = '.'
-            end
-          end
-        else
-          basedir = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
-        end
-        
-        @config_file = File.join(basedir, 'tv_renamer.yml')
-      end
+    def initialize(options)
+      @options = options
 
       begin
-        @config = YAML.load(File.read(@config_file))
+        @config = YAML.load(File.read(@options[:config]))
       rescue
-        puts "#{@config_file} does not exist, no custom renaming available"
+        puts "#{@options[:config]} does not exist, no custom renaming available"
         @config = {}
       end
     end
@@ -164,15 +112,15 @@ module TvRenamer
 
       return false unless new_filename = generate_filename(video)
 
-      new_filename = [@output_dir, new_filename].join(File::Separator)
+      new_filename = [@options[:directory], new_filename].join(File::Separator)
 
-      if !@rename or @verbose
+      if !@options[:rename] or @options[:verbose]
         puts "rename #{video.filename} to #{new_filename}"
       end
 
-      if @rename
+      if @options[:rename]
         # if the file doesn't exist (or we allow overwrites), we rename it
-        if !File::exist?(new_filename) or @overwrite
+        if !File::exist?(new_filename) or @options[:overwrite]
           begin
             FileUtils.mv(video.filename, new_filename)
             @one_rename_succeeded = true
@@ -261,7 +209,7 @@ module TvRenamer
       end
       
       puts <<-EOS
-Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@config_file}
+Please add an alias of the epguide.com show url for \"#{video.show}\" to #{@options[:config]}
 NOTE: The url should only be the part after http://epguides.com/
 eg. if this file is actually Battlestar Galactica (1978), the full url would be http://epguides.com/BattlestarGalactica_1978/
     you would add the following:

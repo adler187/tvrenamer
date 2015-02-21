@@ -15,9 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with tv_renamer.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'tv_renamer/version'
-require 'tv_renamer/defaultconfig'
-require 'tv_renamer/videofile'
-
-
-require 'tv_renamer/renamer'
+module TvRenamer
+  if RUBY_PLATFORM['linux']
+    if ENV['XDG_CONFIG_HOME']
+      BASEDIR = ENV['XDG_CONFIG_HOME']
+    else
+      if ENV['HOME']
+        BASEDIR = File.join(ENV['HOME'], '.config')
+      else
+        STDERR.puts '$XDG_CONFIG_HOME and $HOME unset, falling back to current directory'
+        BASEDIR = '.'
+      end
+    end
+  else
+    BASEDIR = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
+  end
+  
+  DEFAULT_CONFIG = File.join(BASEDIR, 'tv_renamer.yml')
+end

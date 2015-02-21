@@ -18,6 +18,66 @@
 # along with tv_renamer.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'rubygems'
+require 'optparse'
 require 'tv_renamer'
 
-TvRenamer::Renamer.new(ARGV).run
+options =
+{
+  verbose: false,
+  debug: false,
+  rename: true,
+  overwrite: false,
+  directory: '.',
+  config: TvRenamer::DEFAULT_CONFIG
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: tv_renamer [options]"
+
+  opts.on("-c", "--config FILE", "Use config file FILE instead of #{TvRenamer::DEFAULT_CONFIG}") do |dir|
+    options[:config] = dir
+  end
+
+  opts.on("-o", "--output-dir DIR", "Rename files to DIR instead of the current directory") do |dir|
+    options[:directory] = dir
+  end
+
+  opts.on("-w", "--[no-]overwrite", "Overwrite existing file(s) if they exist") do |overwrite|
+    options[:overwrite] = overwrite
+  end
+
+  opts.on("-n", "--no-rename", "Dry run mode - don't actually rename files") do |rename|
+    options[:rename] = rename
+  end
+
+  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+    options[:verbose] = v
+  end
+
+  opts.on("-d", "--[no-]debug", "Enable debug output") do |debug|
+    options[:debug] = debug
+  end
+
+  opts.separator ""
+  opts.separator "Common options:"
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+  opts.on_tail("-V", "--version", "Show version") do
+    puts "tv_renamer version #{TvRenamer::VERSION}"
+    exit
+  end
+end
+
+begin
+  parser.parse!
+rescue
+  puts "Invalid option specified"
+  puts parser
+  exit 1
+end
+
+TvRenamer::Renamer.new(options).run
