@@ -17,7 +17,7 @@
 
 require 'tv_renamer/version'
 require 'tv_renamer/default_config'
-require 'tv_renamer/videofile'
+require 'tv_renamer/video_file'
 
 
 require 'tv_renamer/renamer'
