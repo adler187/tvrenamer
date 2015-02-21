@@ -29,10 +29,19 @@ module TvRenamer
       @options = options
 
       begin
-        @config = YAML.load(File.read(@options[:config]))
+        config = YAML.load(File.read(@options[:config]))
+        
+        global = config['global'] || {}
+        @shows = config['shows'] || {}
+        
+        unless @shows.empty? || global.empty?
+          @shows.keys.each do |key|
+            @shows[key] = global.merge @shows[key]
+          end
+        end
       rescue
         puts "#{@options[:config]} does not exist, no custom renaming available"
-        @config = {}
+        @shows = {}
       end
     end
 
@@ -223,13 +232,8 @@ shows:
     end
 
     def attribute(attribute, show)
-      if show.nil?
-        return @config[attribute]
-      else
-        return nil if @config['shows'].nil?
-        return nil if @config['shows'][show.downcase].nil?
-        return @config['shows'][show.downcase][attribute] || @config[attribute]
-      end
+      return nil if @shows[show.downcase].nil?
+      return @shows[show.downcase][attribute] || @shows[attribute]
     end
 
     def matchstring(video, tvrage)
