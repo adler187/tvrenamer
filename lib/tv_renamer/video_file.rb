@@ -15,11 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with tv_renamer.  If not, see <http://www.gnu.org/licenses/>.
 
+require 'date'
+require 'cgi'
+
 module TvRenamer
   class VideoFile
     SPLITS = [ ' ', '.' ]
 
-    attr_accessor :orig_show, :season, :episode_number, :episode_name, :extension, :filename, :date, :production_code, :format
+    attr_accessor :orig_show, :season, :episode_number, :episode_name, :extension, :original_filename, :date, :production_code, :format
 
     def show
       @orig_show ||= show_name_from_tokens
@@ -41,6 +44,48 @@ module TvRenamer
     def config(option)
       @config[option]
     end
+    
+    def filename
+      # set the filename to the mask as a base
+      name = @config['mask'].dup
+
+      # substitute the patterns with the data we found
+      name.gsub!("%show%", show_name)
+      name.gsub!("%episode%", @episode_name)
+      name.gsub!("%season%", @season)
+      name.gsub!("%epnumber%", @episode_number)
+
+      date = @date || ""
+      
+      # if there is a custom date format, use that
+      # otherwise date is however epguides displays it
+      if !@date.nil? && date_format = @config['dateformat']
+        date.insert(-3, "20")
+        date = Date.parse(@date).strftime(date_format)
+      end
+
+      # TODO: we need to handle this better if date, code, etc.. don't exists
+      # right now they just end up as spaces
+      name.gsub!("%date%", date)
+      name.gsub!("%code%", @production_code)
+
+      # add on the extension
+      name = "#{name}.#{@extension}"
+
+      # replace html encoded characters
+      name = CGI.unescapeHTML(name)
+
+      # replace these illegal win32 characters with '-'
+      name.gsub!(":", "-")
+      name.gsub!("/", "-")
+      
+      if RUBY_PLATFORM =~ /cygwin|mswin|mingw|bccwin|wince|emx/
+        # just delete theses illegal win32 characters
+        name.delete!("?\\<>\"")
+      end
+
+      name
+    end
 
     def to_s
       [show, @season, @episode_number, @date, @production_code, @episode_name].join(' : ')
@@ -60,11 +105,11 @@ module TvRenamer
 
   private
     def parse(filename)
-      @filename = filename
-      @extension ||= @filename.split('.').pop
+      @original_filename = filename
+      @extension ||= @original_filename.split('.').pop
       @show_pieces = Array.new
 
-      cleaned_filename = @filename.delete("[]").gsub(" - ", " ").gsub(/\([-\w]+\)/, '')
+      cleaned_filename = @original_filename.delete("[]").gsub(" - ", " ").gsub(/\([-\w]+\)/, '')
 
       if date_match = cleaned_filename.match(/\d\d\.\d\d\.\d{4}/)
         @date = Date.parse(date_match[0].gsub('.', '/')).strftime("%d %b %y")
