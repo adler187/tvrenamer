@@ -19,7 +19,7 @@ module TvRenamer
   class VideoFile
     SPLITS = [ ' ', '.' ]
 
-    attr_accessor :orig_show, :season, :episode_number, :episode_name, :extension, :filename, :date, :production_code, :format, :rename_by_date
+    attr_accessor :orig_show, :season, :episode_number, :episode_name, :extension, :filename, :date, :production_code, :format
 
     def show
       @orig_show ||= show_name_from_tokens
@@ -30,11 +30,36 @@ module TvRenamer
       @show = show
     end
 
+    def show_name
+      @name = @name || @config['customname'] || show
+    end
+
+    def rename_by_date
+      @config['renamebydate']
+    end
+
+    def config(option)
+      @config[option]
+    end
+
     def to_s
       [show, @season, @episode_number, @date, @production_code, @episode_name].join(' : ')
     end
 
-    def initialize(filename)
+    def initialize(filename, config)
+      @config = {}
+
+      parse(filename)
+
+      @config = config['shows'][show_name_from_tokens.downcase] || config['global']
+    end
+
+    def parsed_ok?
+      show && ((@episode_number && @season) || (@config['renamebydate'] && @date))
+    end
+
+  private
+    def parse(filename)
       @filename = filename
       @extension ||= @filename.split('.').pop
       @show_pieces = Array.new
@@ -65,10 +90,6 @@ module TvRenamer
     def clear_variables
       @orig_show = @show = @season = @episode_name = @episode_number = @production_code = @date = nil
       @show_pieces = Array.new
-    end
-
-    def parsed_ok?
-      show && ((@episode_number && @season) || (@rename_by_date && @date))
     end
 
     def parse_showname(pieces)
@@ -129,8 +150,6 @@ module TvRenamer
       end
     end
 
-
-  private
     def camelize(string)
       string[0] = string[0].chr.upcase
       string

@@ -25,23 +25,26 @@ require 'yaml'
 
 module TvRenamer
   class Renamer
+    DEFAULT_MASK = '%show%-%season%-%epnumber%-%episode%'
+    
     def initialize(options)
       @options = options
 
       begin
-        config = YAML.load(File.read(@options[:config]))
+        @config = YAML.load(File.read(@options[:config]))
+        @config['global'] ||= { 'mask' => DEFAULT_MASK }
         
-        global = config['global'] || {}
-        @shows = config['shows'] || {}
+        global = @config['global']
+        shows = @config['shows'] || {}
         
-        unless @shows.empty? || global.empty?
-          @shows.keys.each do |key|
-            @shows[key] = global.merge @shows[key]
+        unless shows.empty?
+          shows.keys.each do |key|
+            shows[key] = global.merge shows[key]
           end
         end
       rescue
         puts "#{@options[:config]} does not exist, no custom renaming available"
-        @shows = {}
+        @config = { 'global' => { 'mask' => DEFAULT_MASK } }
       end
     end
 
@@ -49,9 +52,7 @@ module TvRenamer
       files = Dir['*.{avi,wmv,divx,mpg,mpeg,xvid,mp4,mkv}'].sort
 
       files.each do |file|
-        video = VideoFile.new(file)
-
-        video.rename_by_date = true if video.show && attribute('renamebydate', video.orig_show)
+        video = VideoFile.new(file, @config)
 
         # parse the show into @show, @season, @episode_number, etc...
         if !video.parsed_ok?
@@ -110,11 +111,6 @@ module TvRenamer
     def rename(video)
       return false unless set_attributes_from_epguides(video)
 
-      # if the config exists, we set the showname to the custome name if it exists
-      if customname = attribute('customname', video.orig_show)
-        video.show = customname
-      end
-
       # pad the episode with 0 if length is less than 0, we need to handle
       # this better for 3+ digit episodes seasons
       video.episode_number = sprintf("%02i", video.episode_number.to_i)
@@ -148,34 +144,26 @@ module TvRenamer
     end
 
     def generate_filename(video)
-      # if the config file exists, and they set a custom renaming mask,
-      # or a global one exists we need to do more custom renaming
-      if mask = attribute('mask', video.orig_show)
-        # set the filename to the mask as a base
+      # set the filename to the mask as a base
+      filename = video.config('mask').dup
 
-        filename = mask.dup
+      # substitute the patterns with the data we found
+      filename.gsub!("%show%", video.show_name)
+      filename.gsub!("%episode%", video.episode_name)
+      filename.gsub!("%season%", video.season)
+      filename.gsub!("%epnumber%", video.episode_number)
 
-        # substitute the patterns with the data we found
-        filename.gsub!("%show%", video.show)
-        filename.gsub!("%episode%", video.episode_name)
-        filename.gsub!("%season%", video.season)
-        filename.gsub!("%epnumber%", video.episode_number)
-
-        # if there is a custom date format, use that
-        # otherwise date is however epguides displays it
-        if !video.date.nil? && date_format = attribute('dateformat', video.orig_show)
-          video.date.insert(-3, "20")
-          video.date = Date.parse(video.date).strftime(date_format)
-        end
-
-        # TODO: we need to handle this better if date, code, etc.. don't exists
-        # right now they just end up as spaces
-        filename.gsub!("%date%", video.date)
-        filename.gsub!("%code%", video.production_code)
-      # if we don't have a config file, or nothing specific is set, use the default pattern
-      else
-        filename = [video.show, video.season, video.episode_number,  video.episode_name].join(' - ')
+      # if there is a custom date format, use that
+      # otherwise date is however epguides displays it
+      if !video.date.nil? && date_format = video.config('dateformat')
+        video.date.insert(-3, "20")
+        video.date = Date.parse(video.date).strftime(date_format)
       end
+
+      # TODO: we need to handle this better if date, code, etc.. don't exists
+      # right now they just end up as spaces
+      filename.gsub!("%date%", video.date)
+      filename.gsub!("%code%", video.production_code)
 
       # add on the extension
       filename = "#{filename}.#{video.extension}"
@@ -212,8 +200,8 @@ module TvRenamer
         return response.body
       end
       
-      if attribute('url', video.show)
-        puts "The alias of \"#{attribute('url', video.show)}\" for \"#{video.show}\" is invalid!"
+      if video.config('url')
+        puts "The alias of \"#{video.config('url')}\" for \"#{video.show}\" is invalid!"
         return nil
       end
       
@@ -229,11 +217,6 @@ shows:
       EOS
             
       return nil
-    end
-
-    def attribute(attribute, show)
-      return nil if @shows[show.downcase].nil?
-      return @shows[show.downcase][attribute] || @shows[attribute]
     end
 
     def matchstring(video, tvrage)
@@ -308,7 +291,7 @@ shows:
 
     def show_url(video)
       # use the url specified in the config, if set
-      url = attribute('url', video.show)
+      url = video.config('url')
 
       if url.nil?
         url = video.show.split(' ').join
