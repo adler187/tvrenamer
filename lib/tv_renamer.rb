@@ -16,7 +16,7 @@
 # along with tv_renamer.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'tv_renamer/version'
-require 'tv_renamer/defaultconfig'
+require 'tv_renamer/default_config'
 require 'tv_renamer/videofile'
 
 
